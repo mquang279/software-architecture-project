@@ -30,17 +30,17 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponseDto> signupUser(@RequestBody SignupRequestDto signupRequestDto){
-        String token = authService.signupUser(signupRequestDto);
+    public ResponseEntity<AuthResponseDto> signupUser(@RequestBody SignupRequestDto signupRequestDto) {
+        String token = authService.signup(signupRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(AuthResponseDto.builder().token(token).build());
     }
 
     @PostMapping("/authenticate")
-    public ResponseEntity<AuthResponseDto> authenticateUser(@RequestBody AuthRequestDto authRequestDto){
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(authRequestDto.getUsername(), authRequestDto.getPassword());
+    public ResponseEntity<AuthResponseDto> authenticateUser(@RequestBody AuthRequestDto authRequestDto) {
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                authRequestDto.getUsername(), authRequestDto.getPassword());
         authenticationManager.authenticate(authToken);
         String token = authService.authenticateUser(authRequestDto.getUsername());
         return ResponseEntity.ok(AuthResponseDto.builder().token(token).build());
