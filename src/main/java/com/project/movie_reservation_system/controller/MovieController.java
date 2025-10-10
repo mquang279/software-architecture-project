@@ -2,92 +2,59 @@ package com.project.movie_reservation_system.controller;
 
 import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.MovieRequestDto;
-import com.project.movie_reservation_system.dto.PagedApiResponseDto;
+import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Movie;
 import com.project.movie_reservation_system.service.MovieService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPER_ADMIN')")
 @RestController
 @RequestMapping("/api/v1/movies")
 public class MovieController {
-
     private final MovieService movieService;
 
-    @Autowired
     public MovieController(MovieService movieService) {
         this.movieService = movieService;
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<PagedApiResponseDto> getAllMovies(
+    @GetMapping("")
+    public ResponseEntity<PaginationResponse<Movie>> getAllMovies(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize
-    ){
-        Page<Movie> moviePage = movieService.getAllMovies(page, pageSize);
-        List<Movie> movies = moviePage.getContent();
+            @RequestParam(defaultValue = "10") int pageSize) {
+        PaginationResponse<Movie> response = movieService.getAllMovies(page, pageSize);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Movie>> getMovieById(@PathVariable long id) {
+        Movie movie = movieService.getMovieById(id);
         return ResponseEntity.ok(
-            PagedApiResponseDto.builder()
-                        .totalPages(moviePage.getTotalPages())
-                        .totalElements(moviePage.getTotalElements())
-                        .currentPageData(movies)
-                        .build()
-        );
+                ApiResponse.success("Fetched movie with id: " + id, movie));
     }
 
-    @GetMapping("/movie/{movieId}")
-    public ResponseEntity<ApiResponse> getMovieById(@PathVariable long movieId){
-        Movie movie = movieService.getMovieById(movieId);
-        return ResponseEntity.ok(
-                ApiResponse.builder()
-                        .message("Fetched movie with id: " + movieId)
-                        .data(movie)
-                        .build()
-        );
+    @PostMapping("")
+    public ResponseEntity<ApiResponse<Movie>> createNewMovie(@RequestBody MovieRequestDto movieRequestDto) {
+        Movie movie = movieService.createMovie(movieRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Movie created successfully.", movie));
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createNewMovie(@RequestBody MovieRequestDto movieRequestDto){
-        Movie movie = movieService.createNewMovie(movieRequestDto);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(
-                        ApiResponse.builder()
-                                .message("Movie created")
-                                .data(movie)
-                                .build()
-                );
+    @PutMapping("/{movieId}")
+    public ResponseEntity<ApiResponse<Movie>> updateMovieById(@PathVariable long id,
+            @RequestBody MovieRequestDto movieRequestDto) {
+        Movie movie = movieService.updateMovieById(id, movieRequestDto);
+        return ResponseEntity.ok()
+                .body(ApiResponse.success("Movie with id " + id + " updated successfully", movie));
     }
 
-    @PutMapping("/movie/update/{movieId}")
-    public ResponseEntity<ApiResponse> updateMovieById(@PathVariable long movieId, @RequestBody MovieRequestDto movieRequestDto){
-        Movie movie = movieService.updateMovieById(movieId, movieRequestDto);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(
-                        ApiResponse.builder()
-                                .message("Movie updated")
-                                .data(movie)
-                                .build()
-                );
-    }
-
-    @DeleteMapping("/movie/delete/{movieId}")
-    public ResponseEntity<?> deleteMovieById(@PathVariable long movieId){
+    @DeleteMapping("/{movieId}")
+    public ResponseEntity<?> deleteMovieById(@PathVariable long movieId) {
         movieService.deleteMovieById(movieId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
-
-    // User should be able to filter movies by genres and languages
-
-
 }
