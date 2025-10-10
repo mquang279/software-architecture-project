@@ -6,7 +6,6 @@ import com.project.movie_reservation_system.dto.SignupRequestDto;
 import com.project.movie_reservation_system.service.impl.AuthServiceImpl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,10 +30,10 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponseDto> signupUser(@RequestBody SignupRequestDto signupRequestDto) {
-        String token = authService.signup(signupRequestDto);
+        AuthResponseDto response = authService.signup(signupRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(AuthResponseDto.builder().token(token).build());
+                .body(response);
     }
 
     @PostMapping("/authenticate")
@@ -42,8 +41,8 @@ public class AuthController {
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 authRequestDto.getUsername(), authRequestDto.getPassword());
         authenticationManager.authenticate(authToken);
-        String token = authService.authenticateUser(authRequestDto.getUsername());
-        return ResponseEntity.ok(AuthResponseDto.builder().token(token).build());
+        AuthResponseDto response = authService.authenticateUser(authRequestDto.getUsername());
+        return ResponseEntity.ok(response);
     }
 
 }

@@ -1,6 +1,8 @@
 package com.project.movie_reservation_system.service.impl;
 
+import com.project.movie_reservation_system.dto.AuthResponseDto;
 import com.project.movie_reservation_system.dto.SignupRequestDto;
+import com.project.movie_reservation_system.dto.UserDTO;
 import com.project.movie_reservation_system.entity.User;
 import com.project.movie_reservation_system.enums.Role;
 import com.project.movie_reservation_system.exception.UserExistsException;
@@ -9,7 +11,6 @@ import com.project.movie_reservation_system.service.AuthService;
 import com.project.movie_reservation_system.service.JwtService;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    public String signup(SignupRequestDto signupRequestDto) {
+    public AuthResponseDto signup(SignupRequestDto signupRequestDto) {
 
         if (userRepository.findByUsername(signupRequestDto.getUsername()).isPresent())
             throw new UserExistsException(USER_EXISTS, HttpStatus.BAD_REQUEST);
@@ -45,12 +46,18 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User createdUser = userRepository.save(user);
-        return jwtService.generateToken(createdUser);
+        return AuthResponseDto.builder()
+                .token(jwtService.generateToken(createdUser))
+                .userDTO(new UserDTO(user)).build();
     }
 
-    public String authenticateUser(String username) {
-        return userRepository.findByUsername(username)
+    public AuthResponseDto authenticateUser(String username) {
+        String token = userRepository.findByUsername(username)
                 .map(jwtService::generateToken)
                 .orElseThrow(RuntimeException::new);
+        User user = userRepository.findByUsername(username).get();
+        return AuthResponseDto.builder()
+                .token(token)
+                .userDTO(new UserDTO(user)).build();
     }
 }

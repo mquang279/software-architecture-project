@@ -1,9 +1,10 @@
 package com.project.movie_reservation_system.service;
 
+import com.project.movie_reservation_system.dto.AuthResponseDto;
 import com.project.movie_reservation_system.dto.SignupRequestDto;
 
 public interface AuthService {
-    String signup(SignupRequestDto signupRequestDto);
+    AuthResponseDto signup(SignupRequestDto signupRequestDto);
 
-    String authenticateUser(String username);
+    AuthResponseDto authenticateUser(String username);
 }
