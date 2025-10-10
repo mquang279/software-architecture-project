@@ -1,6 +1,6 @@
 package com.project.movie_reservation_system.controller;
 
-import com.project.movie_reservation_system.dto.ApiResponseDto;
+import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.PagedApiResponseDto;
 import com.project.movie_reservation_system.dto.ShowRequestDto;
 import com.project.movie_reservation_system.entity.Show;
@@ -62,10 +62,10 @@ public class ShowController {
     }
 
     @GetMapping("/show/{showId}")
-    public ResponseEntity<ApiResponseDto> getShowById(@PathVariable long showId){
+    public ResponseEntity<ApiResponse> getShowById(@PathVariable long showId){
         Show show = showService.getShowById(showId);
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .data(show)
                         .message("Fetched show with id: " + show.getId())
                         .build()
@@ -73,12 +73,12 @@ public class ShowController {
     }
 
     @PostMapping("/show/create")
-    public ResponseEntity<ApiResponseDto> createShow(@RequestBody ShowRequestDto showRequestDto){
+    public ResponseEntity<ApiResponse> createShow(@RequestBody ShowRequestDto showRequestDto){
         Show show = showService.createNewShow(showRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        ApiResponseDto.builder()
+                        ApiResponse.builder()
                                 .message("Show created with id: " + show.getId())
                                 .data(show)
                                 .build()
@@ -86,17 +86,17 @@ public class ShowController {
     }
 
     @PatchMapping("/show/update/movie/{showId}")
-    public ResponseEntity<ApiResponseDto> updateMovie(){
+    public ResponseEntity<ApiResponse> updateMovie(){
         return null;
     }
 
     @PatchMapping("/show/update/theatre/{showId}")
-    public ResponseEntity<ApiResponseDto> updateTheatre(){
+    public ResponseEntity<ApiResponse> updateTheatre(){
         return null;
     }
 
     @PatchMapping("/show/update/timings/{showId}")
-    public ResponseEntity<ApiResponseDto> updateShowTimings(){
+    public ResponseEntity<ApiResponse> updateShowTimings(){
         return null;
     }
 

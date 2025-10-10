@@ -1,6 +1,6 @@
 package com.project.movie_reservation_system.controller;
 
-import com.project.movie_reservation_system.dto.ApiResponseDto;
+import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.PagedApiResponseDto;
 import com.project.movie_reservation_system.dto.ReservationRequestDto;
 import com.project.movie_reservation_system.entity.Reservation;
@@ -45,7 +45,7 @@ public class ReservationController {
     }
 
     @PostMapping("/reserve")
-    public ResponseEntity<ApiResponseDto> createReservation(
+    public ResponseEntity<ApiResponse> createReservation(
             @RequestBody ReservationRequestDto reservationRequestDto
     ){
         String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -54,7 +54,7 @@ public class ReservationController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        ApiResponseDto.builder()
+                        ApiResponse.builder()
                                 .data(reservation)
                                 .message("Reservation created with id: " + reservation.getId())
                                 .build()
@@ -62,10 +62,10 @@ public class ReservationController {
     }
 
     @GetMapping("/reservation/{reservationId}")
-    public ResponseEntity<ApiResponseDto> getReservationById(@PathVariable long reservationId){
+    public ResponseEntity<ApiResponse> getReservationById(@PathVariable long reservationId){
         Reservation reservation = reservationService.getReservationById(reservationId);
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .message("Reservation Fetched with id: " + reservation.getId())
                         .data(reservation)
                         .build()
@@ -73,10 +73,10 @@ public class ReservationController {
     }
 
     @PostMapping("/cancel/{reservationId}")
-    public ResponseEntity<ApiResponseDto> cancelReservation(@PathVariable long reservationId){
+    public ResponseEntity<ApiResponse> cancelReservation(@PathVariable long reservationId){
         Reservation reservation = reservationService.cancelReservation(reservationId);
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .message("Reservation Canceled")
                         .data(reservation)
                         .build()

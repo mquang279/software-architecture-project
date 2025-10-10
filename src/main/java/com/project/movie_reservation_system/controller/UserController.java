@@ -1,6 +1,6 @@
 package com.project.movie_reservation_system.controller;
 
-import com.project.movie_reservation_system.dto.ApiResponseDto;
+import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.UserResponseDto;
 import com.project.movie_reservation_system.enums.Role;
 import com.project.movie_reservation_system.repository.UserRepository;
@@ -44,7 +44,7 @@ public class UserController {
 
     @Secured({"ROLE_SUPER_ADMIN"})
     @GetMapping("/all")
-    public ResponseEntity<ApiResponseDto> getAllUsers() {
+    public ResponseEntity<ApiResponse> getAllUsers() {
         List<UserResponseDto> userResponseDtos = userRepository.findAll()
                 .stream()
                 .map(user -> UserResponseDto.builder()
@@ -58,7 +58,7 @@ public class UserController {
                 )
                 .toList();
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .data(userResponseDtos)
                         .message("Fetched all users")
                         .build()

@@ -1,6 +1,5 @@
 package com.project.movie_reservation_system.dto;
 
-import com.project.movie_reservation_system.enums.Role;
 import lombok.Builder;
 import lombok.Data;
 

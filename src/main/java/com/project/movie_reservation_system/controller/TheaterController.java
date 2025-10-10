@@ -1,6 +1,6 @@
 package com.project.movie_reservation_system.controller;
 
-import com.project.movie_reservation_system.dto.ApiResponseDto;
+import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.PagedApiResponseDto;
 import com.project.movie_reservation_system.dto.TheaterRequestDto;
 import com.project.movie_reservation_system.entity.Theater;
@@ -56,10 +56,10 @@ public class TheaterController {
     }
 
     @GetMapping("/theater/{theaterId}")
-    public ResponseEntity<ApiResponseDto> getTheaterById(@PathVariable long theaterId){
+    public ResponseEntity<ApiResponse> getTheaterById(@PathVariable long theaterId){
         Theater theater = theaterService.getTheaterById(theaterId);
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .data(theater)
                         .message("Fetched theater by id: " + theater.getId())
                         .build()
@@ -68,12 +68,12 @@ public class TheaterController {
 
 
     @PostMapping("/theater/create")
-    public ResponseEntity<ApiResponseDto> createTheater(@RequestBody TheaterRequestDto theaterRequestDto){
+    public ResponseEntity<ApiResponse> createTheater(@RequestBody TheaterRequestDto theaterRequestDto){
         Theater theater = theaterService.createNewTheater(theaterRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        ApiResponseDto.builder()
+                        ApiResponse.builder()
                                 .message("New Theater created with id: " + theater.getId())
                                 .data(theater)
                                 .build()
@@ -81,10 +81,10 @@ public class TheaterController {
     }
 
     @PutMapping("/theater/update/{theaterId}")
-    public ResponseEntity<ApiResponseDto> updateTheaterById(@PathVariable long theaterId, @RequestBody TheaterRequestDto theaterRequestDto){
+    public ResponseEntity<ApiResponse> updateTheaterById(@PathVariable long theaterId, @RequestBody TheaterRequestDto theaterRequestDto){
         Theater updatedTheater = theaterService.updateTheaterById(theaterId, theaterRequestDto);
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .message("Theater updated")
                         .data(updatedTheater)
                         .build()

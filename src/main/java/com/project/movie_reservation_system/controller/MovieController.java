@@ -1,6 +1,6 @@
 package com.project.movie_reservation_system.controller;
 
-import com.project.movie_reservation_system.dto.ApiResponseDto;
+import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.MovieRequestDto;
 import com.project.movie_reservation_system.dto.PagedApiResponseDto;
 import com.project.movie_reservation_system.entity.Movie;
@@ -43,10 +43,10 @@ public class MovieController {
     }
 
     @GetMapping("/movie/{movieId}")
-    public ResponseEntity<ApiResponseDto> getMovieById(@PathVariable long movieId){
+    public ResponseEntity<ApiResponse> getMovieById(@PathVariable long movieId){
         Movie movie = movieService.getMovieById(movieId);
         return ResponseEntity.ok(
-                ApiResponseDto.builder()
+                ApiResponse.builder()
                         .message("Fetched movie with id: " + movieId)
                         .data(movie)
                         .build()
@@ -54,12 +54,12 @@ public class MovieController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponseDto> createNewMovie(@RequestBody MovieRequestDto movieRequestDto){
+    public ResponseEntity<ApiResponse> createNewMovie(@RequestBody MovieRequestDto movieRequestDto){
         Movie movie = movieService.createNewMovie(movieRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        ApiResponseDto.builder()
+                        ApiResponse.builder()
                                 .message("Movie created")
                                 .data(movie)
                                 .build()
@@ -67,12 +67,12 @@ public class MovieController {
     }
 
     @PutMapping("/movie/update/{movieId}")
-    public ResponseEntity<ApiResponseDto> updateMovieById(@PathVariable long movieId, @RequestBody MovieRequestDto movieRequestDto){
+    public ResponseEntity<ApiResponse> updateMovieById(@PathVariable long movieId, @RequestBody MovieRequestDto movieRequestDto){
         Movie movie = movieService.updateMovieById(movieId, movieRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        ApiResponseDto.builder()
+                        ApiResponse.builder()
                                 .message("Movie updated")
                                 .data(movie)
                                 .build()
