@@ -1,7 +1,8 @@
 package com.project.movie_reservation_system.config;
 
 import com.project.movie_reservation_system.repository.UserRepository;
-import com.project.movie_reservation_system.service.JwtService;
+import com.project.movie_reservation_system.service.impl.JwtServiceImpl;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,11 +19,11 @@ import java.io.IOException;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final JwtServiceImpl jwtService;
     private final UserRepository userRepository;
 
     @Autowired
-    public JwtFilter(JwtService jwtService, UserRepository userRepository) {
+    public JwtFilter(JwtServiceImpl jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
