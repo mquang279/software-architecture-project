@@ -1,9 +1,11 @@
 package com.project.movie_reservation_system.controller;
 
 import com.project.movie_reservation_system.dto.ApiResponse;
+import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.dto.UserResponseDto;
 import com.project.movie_reservation_system.enums.Role;
 import com.project.movie_reservation_system.repository.UserRepository;
+import com.project.movie_reservation_system.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -19,70 +21,34 @@ import static com.project.movie_reservation_system.constant.ExceptionMessages.US
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     @Autowired
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping("/user/me")
     public ResponseEntity<UserResponseDto> currentUser() {
-        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return userRepository.findByUsername(currentUsername)
-                .map(user -> ResponseEntity.ok(UserResponseDto.builder()
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .role(user.getRole())
-                        .username(user.getUsername())
-                        .id(user.getId())
-                        .build())
-                )
-                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
+        return ResponseEntity.ok(userService.getCurrentUser());
+
     }
 
     @Secured({"ROLE_SUPER_ADMIN"})
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse> getAllUsers() {
-        List<UserResponseDto> userResponseDtos = userRepository.findAll()
-                .stream()
-                .map(user -> UserResponseDto.builder()
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .role(user.getRole())
-                        .username(user.getUsername())
-                        .id(user.getId())
-                        .build()
-                )
-                .toList();
+    public ResponseEntity<PaginationResponse<UserResponseDto>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
         return ResponseEntity.ok(
-                ApiResponse.builder()
-                        .data(userResponseDtos)
-                        .message("Fetched all users")
-                        .build()
+                userService.getAllUser(page, pageSize)
         );
     }
 
     @Secured({"ROLE_SUPER_ADMIN"})
     @PostMapping("/user/promote/{username}")
     public ResponseEntity<UserResponseDto> promoteUserToAdmin(@PathVariable String username) {
-        return userRepository.findByUsername(username)
-                .map(userInDb -> {
-                    userInDb.setRole(Role.ROLE_ADMIN);
-                    return userRepository.save(userInDb);
-                })
-                .map(updatedUser -> ResponseEntity.ok(UserResponseDto.builder()
-                        .email(updatedUser.getEmail())
-                        .firstName(updatedUser.getFirstName())
-                        .lastName(updatedUser.getLastName())
-                        .role(updatedUser.getRole())
-                        .username(updatedUser.getUsername())
-                        .id(updatedUser.getId())
-                        .build())
-                )
-                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
+        return ResponseEntity.ok(userService.promoteUserToAdmin(username));
     }
 
 }

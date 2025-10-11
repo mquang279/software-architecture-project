@@ -1,102 +1,80 @@
 package com.project.movie_reservation_system.controller;
 
 import com.project.movie_reservation_system.dto.ApiResponse;
-import com.project.movie_reservation_system.dto.PagedApiResponseDto;
+import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.dto.ShowRequestDto;
 import com.project.movie_reservation_system.entity.Show;
-import com.project.movie_reservation_system.service.ShowService;
-import jakarta.persistence.EntityManager;
+import com.project.movie_reservation_system.service.impl.ShowServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/shows")
 public class ShowController {
 
-    private final ShowService showService;
+    private final ShowServiceImpl showService;
 
     @Autowired
-    public ShowController(ShowService showService) {
+    public ShowController(ShowServiceImpl showService) {
         this.showService = showService;
     }
 
 
     @GetMapping("/all")
-    public ResponseEntity<PagedApiResponseDto> getAllShows(
+    public ResponseEntity<PaginationResponse<Show>> getAllShows(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ){
-        Page<Show> showPage = showService.getllShows(page, size);
-        return ResponseEntity.ok(
-                PagedApiResponseDto.builder()
-                        .currentCount(showPage.getNumberOfElements())
-                        .currentPageData(showPage.getContent())
-                        .totalElements(showPage.getTotalElements())
-                        .totalPages(showPage.getTotalPages())
-                        .build()
-        );
+        PaginationResponse<Show> response = showService.getllShows(page, size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<PagedApiResponseDto> filterShows(
+    public ResponseEntity<PaginationResponse<Show>> filterShows(
             @RequestParam(required = false) Long theaterId,
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String showDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ){
-        Page<Show> showPage = showService.filterShowsByTheaterIdAndMovieId(theaterId, movieId, PageRequest.of(page, size));
-        return ResponseEntity.ok(
-                PagedApiResponseDto.builder()
-                        .currentCount(showPage.getNumberOfElements())
-                        .currentPageData(showPage.getContent())
-                        .totalElements(showPage.getTotalElements())
-                        .totalPages(showPage.getTotalPages())
-                        .build()
-        );
+        PaginationResponse<Show> response = showService.filterShowsByTheaterIdAndMovieId(theaterId, movieId, PageRequest.of(page, size));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/show/{showId}")
-    public ResponseEntity<ApiResponse> getShowById(@PathVariable long showId){
+    public ResponseEntity<ApiResponse<Show>> getShowById(@PathVariable long showId){
         Show show = showService.getShowById(showId);
         return ResponseEntity.ok(
-                ApiResponse.builder()
-                        .data(show)
-                        .message("Fetched show with id: " + show.getId())
-                        .build()
+                ApiResponse.success("Fetched show with id: " + showId, show)
         );
     }
 
     @PostMapping("/show/create")
-    public ResponseEntity<ApiResponse> createShow(@RequestBody ShowRequestDto showRequestDto){
+    public ResponseEntity<ApiResponse<Show>> createShow(@RequestBody ShowRequestDto showRequestDto){
         Show show = showService.createNewShow(showRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
-                        ApiResponse.builder()
-                                .message("Show created with id: " + show.getId())
-                                .data(show)
-                                .build()
+                        ApiResponse.success("Show created successfully: " + show.getId(), show)
                 );
     }
 
     @PatchMapping("/show/update/movie/{showId}")
-    public ResponseEntity<ApiResponse> updateMovie(){
+    public ResponseEntity<?> updateMovie(){
         return null;
     }
 
     @PatchMapping("/show/update/theatre/{showId}")
-    public ResponseEntity<ApiResponse> updateTheatre(){
+    public ResponseEntity<?> updateTheatre(){
         return null;
     }
 
     @PatchMapping("/show/update/timings/{showId}")
-    public ResponseEntity<ApiResponse> updateShowTimings(){
+    public ResponseEntity<?> updateShowTimings(){
         return null;
     }
 
