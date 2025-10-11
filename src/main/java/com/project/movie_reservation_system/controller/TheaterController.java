@@ -22,16 +22,16 @@ public class TheaterController {
         this.theaterService = theaterService;
     }
 
-    @GetMapping("/all")
+    @GetMapping("")
     public ResponseEntity<PaginationResponse<Theater>> getAllTheaters(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
-    ){
+    ) {
         PaginationResponse<Theater> response = theaterService.getAllTheaters(page, size);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/location/{location}")
+    @GetMapping("/{location}")
     public ResponseEntity<PaginationResponse<Theater>> getAllTheatersByLocation(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -41,7 +41,7 @@ public class TheaterController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/theater/{theaterId}")
+    @GetMapping("/{theaterId}")
     public ResponseEntity<ApiResponse<Theater>> getTheaterById(@PathVariable long theaterId){
         Theater theater = theaterService.getTheaterById(theaterId);
         return ResponseEntity.ok(
@@ -50,7 +50,7 @@ public class TheaterController {
     }
 
 
-    @PostMapping("/theater/create")
+    @PostMapping("")
     public ResponseEntity<ApiResponse<Theater>> createTheater(@RequestBody TheaterRequestDto theaterRequestDto){
         Theater theater = theaterService.createNewTheater(theaterRequestDto);
         return ResponseEntity
@@ -60,7 +60,7 @@ public class TheaterController {
                 );
     }
 
-    @PutMapping("/theater/update/{theaterId}")
+    @PutMapping("{theaterId}")
     public ResponseEntity<ApiResponse<Theater>> updateTheaterById(@PathVariable long theaterId, @RequestBody TheaterRequestDto theaterRequestDto){
         Theater updatedTheater = theaterService.updateTheaterById(theaterId, theaterRequestDto);
         return ResponseEntity.ok(
@@ -69,7 +69,7 @@ public class TheaterController {
     }
 
 
-    @DeleteMapping("/theater/delete/{theaterId}")
+    @DeleteMapping("{theaterId}")
     public ResponseEntity<?> deleteTheaterById(@PathVariable long theaterId){
         theaterService.deleteTheaterById(theaterId);
         return ResponseEntity

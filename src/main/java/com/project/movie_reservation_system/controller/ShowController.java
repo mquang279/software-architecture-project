@@ -24,7 +24,7 @@ public class ShowController {
     }
 
 
-    @GetMapping("/all")
+    @GetMapping("")
     public ResponseEntity<PaginationResponse<Show>> getAllShows(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -37,7 +37,6 @@ public class ShowController {
     public ResponseEntity<PaginationResponse<Show>> filterShows(
             @RequestParam(required = false) Long theaterId,
             @RequestParam(required = false) Long movieId,
-            @RequestParam(required = false) String showDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ){
@@ -45,7 +44,7 @@ public class ShowController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/show/{showId}")
+    @GetMapping("/{showId}")
     public ResponseEntity<ApiResponse<Show>> getShowById(@PathVariable long showId){
         Show show = showService.getShowById(showId);
         return ResponseEntity.ok(
@@ -53,7 +52,7 @@ public class ShowController {
         );
     }
 
-    @PostMapping("/show/create")
+    @PostMapping("")
     public ResponseEntity<ApiResponse<Show>> createShow(@RequestBody ShowRequestDto showRequestDto){
         Show show = showService.createNewShow(showRequestDto);
         return ResponseEntity
@@ -63,22 +62,22 @@ public class ShowController {
                 );
     }
 
-    @PatchMapping("/show/update/movie/{showId}")
-    public ResponseEntity<?> updateMovie(){
-        return null;
-    }
+//    @PatchMapping("/movie/{showId}")
+//    public ResponseEntity<?> updateMovie(){
+//        return null;
+//    }
+//
+//    @PatchMapping("theatre/{showId}")
+//    public ResponseEntity<?> updateTheatre(){
+//        return null;
+//    }
+//
+//    @PatchMapping("/timings/{showId}")
+//    public ResponseEntity<?> updateShowTimings(){
+//        return null;
+//    }
 
-    @PatchMapping("/show/update/theatre/{showId}")
-    public ResponseEntity<?> updateTheatre(){
-        return null;
-    }
-
-    @PatchMapping("/show/update/timings/{showId}")
-    public ResponseEntity<?> updateShowTimings(){
-        return null;
-    }
-
-    @DeleteMapping("/show/delete/{showId}")
+    @DeleteMapping("/{showId}")
     public ResponseEntity<?> deleteShowById(@PathVariable long showId){
         showService.deleteShowById(showId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

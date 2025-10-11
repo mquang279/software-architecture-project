@@ -28,14 +28,14 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/user/me")
+    @GetMapping("/me")
     public ResponseEntity<UserResponseDto> currentUser() {
         return ResponseEntity.ok(userService.getCurrentUser());
 
     }
 
     @Secured({"ROLE_SUPER_ADMIN"})
-    @GetMapping("/all")
+    @GetMapping("")
     public ResponseEntity<PaginationResponse<UserResponseDto>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize
@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @Secured({"ROLE_SUPER_ADMIN"})
-    @PostMapping("/user/promote/{username}")
+    @PostMapping("/promote/{username}")
     public ResponseEntity<UserResponseDto> promoteUserToAdmin(@PathVariable String username) {
         return ResponseEntity.ok(userService.promoteUserToAdmin(username));
     }
