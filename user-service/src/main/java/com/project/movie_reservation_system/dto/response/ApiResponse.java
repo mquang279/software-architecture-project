@@ -1,4 +1,4 @@
-package com.project.movie_reservation_system.dto;
+package com.project.movie_reservation_system.dto.response;
 
 import java.time.Instant;
 

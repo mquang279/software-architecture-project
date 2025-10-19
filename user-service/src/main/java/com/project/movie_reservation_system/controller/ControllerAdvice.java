@@ -9,10 +9,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ControllerAdvice {
-
-
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<Map<String, String>> handleCustomException(CustomException customException){
+    public ResponseEntity<Map<String, String>> handleCustomException(CustomException customException) {
         return ResponseEntity
                 .status(customException.getHttpStatus())
                 .body(Map.of("message", customException.getMessage()));

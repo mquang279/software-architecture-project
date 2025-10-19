@@ -1,4 +1,4 @@
-package com.project.movie_reservation_system.dto;
+package com.project.movie_reservation_system.dto.response;
 
 import com.project.movie_reservation_system.enums.Role;
 import lombok.Builder;
