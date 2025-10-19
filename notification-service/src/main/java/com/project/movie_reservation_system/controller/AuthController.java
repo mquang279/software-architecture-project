@@ -1,0 +1,48 @@
+package com.project.movie_reservation_system.controller;
+
+import com.project.movie_reservation_system.dto.AuthRequestDto;
+import com.project.movie_reservation_system.dto.AuthResponseDto;
+import com.project.movie_reservation_system.dto.SignupRequestDto;
+import com.project.movie_reservation_system.service.impl.AuthServiceImpl;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/auth")
+public class AuthController {
+
+    private final AuthServiceImpl authService;
+    private final AuthenticationManager authenticationManager;
+
+    public AuthController(AuthServiceImpl authService, AuthenticationManager authenticationManager) {
+        this.authService = authService;
+        this.authenticationManager = authenticationManager;
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<AuthResponseDto> signupUser(@RequestBody SignupRequestDto signupRequestDto) {
+        AuthResponseDto response = authService.signup(signupRequestDto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PostMapping("/authenticate")
+    public ResponseEntity<AuthResponseDto> authenticateUser(@RequestBody AuthRequestDto authRequestDto) {
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                authRequestDto.getUsername(), authRequestDto.getPassword());
+        authenticationManager.authenticate(authToken);
+        AuthResponseDto response = authService.authenticateUser(authRequestDto.getUsername());
+        return ResponseEntity.ok(response);
+    }
+
+}
