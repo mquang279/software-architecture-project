@@ -1,20 +1,19 @@
 package com.project.movie_reservation_system.service;
 
 import com.project.movie_reservation_system.dto.entity.UserDTO;
+import com.project.movie_reservation_system.dto.request.CreateUserRequest;
+import com.project.movie_reservation_system.dto.request.UpdateUserRequest;
 import com.project.movie_reservation_system.dto.response.PaginationResponse;
-import com.project.movie_reservation_system.dto.response.UserResponseDto;
 import com.project.movie_reservation_system.entity.User;
 
 public interface UserService {
-    UserResponseDto getCurrentUser();
+    PaginationResponse<UserDTO> getAllUser(int page, int pageSize);
 
-    PaginationResponse<UserResponseDto> getAllUser(int page, int pageSize);
-
-    UserDTO createUser(User user);
+    UserDTO createUser(CreateUserRequest request);
 
     UserDTO getUserById(Long id);
 
-    UserDTO updateUser(Long id, User user);
+    UserDTO updateUser(Long id, UpdateUserRequest request);
 
     void deleteUser(Long id);
 
