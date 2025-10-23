@@ -24,11 +24,12 @@ public class ReservationController {
 
     @GetMapping
     public ResponseEntity<PaginationResponse<Reservation>> getAllReservationsForCurrentUser(
+            @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         PaginationResponse<Reservation> paginationResponse = reservationService
-                .getAllReservationsForUser(currentUserName, page, size);
+                .getAllReservationsForUser(userId, page, size);
 
         return ResponseEntity.ok(paginationResponse);
     }
@@ -47,9 +48,9 @@ public class ReservationController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Reservation>> createReservation(
-            @RequestBody ReservationRequestDto reservationRequestDto) {
-        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Reservation reservation = reservationService.createReservation(reservationRequestDto, currentUserName);
+            @RequestBody ReservationRequestDto reservationRequestDto, Long userId) {
+//        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Reservation reservation = reservationService.createReservation(reservationRequestDto, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

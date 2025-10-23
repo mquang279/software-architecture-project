@@ -1,19 +1,17 @@
 package com.project.movie_reservation_system.service.impl;
 
+import com.project.movie_reservation_system.client.SeatServiceClient;
+import com.project.movie_reservation_system.client.ShowServiceClient;
+import com.project.movie_reservation_system.client.UserServiceClient;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.dto.ReservationRequestDto;
+import com.project.movie_reservation_system.dto.ShowDto;
+import com.project.movie_reservation_system.dto.UserDto;
 import com.project.movie_reservation_system.entity.Reservation;
-import com.project.movie_reservation_system.entity.Seat;
-import com.project.movie_reservation_system.entity.User;
 import com.project.movie_reservation_system.enums.ReservationStatus;
-import com.project.movie_reservation_system.enums.SeatStatus;
 import com.project.movie_reservation_system.exception.*;
 import com.project.movie_reservation_system.repository.ReservationRepository;
-import com.project.movie_reservation_system.repository.SeatRepository;
-import com.project.movie_reservation_system.repository.ShowRepository;
-import com.project.movie_reservation_system.repository.UserRepository;
 import com.project.movie_reservation_system.service.ReservationService;
-import com.project.movie_reservation_system.service.SeatLockManager;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,84 +32,70 @@ import static com.project.movie_reservation_system.constant.ExceptionMessages.*;
 @Service
 public class ReservationServiceImpl implements ReservationService {
 
-    private final SeatLockManager seatLockManager;
     private final ReservationRepository reservationRepository;
-    private final SeatRepository seatRepository;
-    private final ShowRepository showRepository;
-    private final UserRepository userRepository;
+    private final UserServiceClient userServiceClient;
+    private final ShowServiceClient showServiceClient;
+    private final SeatServiceClient seatServiceClient;
 
-    public ReservationServiceImpl(SeatLockManager seatLockManager,
+    @Autowired
+    public ReservationServiceImpl(
             ReservationRepository reservationRepository,
-            SeatRepository seatRepository,
-            ShowRepository showRepository,
-            UserRepository userRepository) {
-        this.seatLockManager = seatLockManager;
-        this.reservationRepository = reservationRepository;
-        this.seatRepository = seatRepository;
-        this.showRepository = showRepository;
-        this.userRepository = userRepository;
+            UserServiceClient userServiceClient,
+            ShowServiceClient showServiceClient,
+            SeatServiceClient seatServiceClient
+            ) {
+          this.reservationRepository = reservationRepository;
+          this.userServiceClient = userServiceClient;
+          this.showServiceClient = showServiceClient;
+          this.seatServiceClient = seatServiceClient;
     }
 
     @Transactional
     @Override
-    public Reservation createReservation(ReservationRequestDto reservationRequestDto, String currentUserName) {
+    public Reservation createReservation(ReservationRequestDto reservationRequestDto, Long userId) {
+        UserDto user = userServiceClient.getUserById(userId);
+        if (user == null) {
+            throw new CustomException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
 
-        return showRepository
-                .findById(reservationRequestDto.getShowId())
-                .map(show -> {
-                    List<Seat> seats = reservationRequestDto
-                            .getSeatIdsToReserve()
-                            .stream()
-                            .map(seatRepository::findById)
-                            .map(Optional::get)
-                            .toList();
+        // 2. Validate show exists
+        ShowDto show = showServiceClient.getShowById(reservationRequestDto.getShowId());
+        if (show == null) {
+            throw new ShowNotFoundException(SHOW_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
 
-                    // Calculate the amount to be paid.
-                    Double amountToBePaid = seats.stream().map(Seat::getPrice).reduce(0.0, Double::sum);
+        // 3. Lock seats
+        List<Long> seatIds = reservationRequestDto.getSeatIdsToReserve();
+        try {
+            seatServiceClient.lockSeats(seatIds);
 
-                    if (reservationRequestDto.getAmount() != amountToBePaid)
-                        throw new AmountNotMatchException(AMOUNT_NOT_MATCH, HttpStatus.BAD_REQUEST);
+            // 4. Validate amount
+            double totalPrice = seatIds.stream()
+                    .mapToDouble(id -> seatServiceClient.getSeatById(id).getPrice())
+                    .sum();
 
-                    // Acquire the lock for all seats
-                    seats.forEach(seat -> {
-                        ReentrantLock seatLock = seatLockManager.getLockForSeat(seat.getId());
-                        boolean isLockFree = seatLock.tryLock();
-                        if (!isLockFree) {
-                            throw new SeatLockAcquiredException(SEAT_LOCK_ACQUIRED, HttpStatus.CONFLICT);
-                        }
-                    });
+            if (totalPrice != reservationRequestDto.getAmount()) {
+                throw new AmountNotMatchException(AMOUNT_NOT_MATCH, HttpStatus.BAD_REQUEST);
+            }
 
-                    boolean anyBookedSeat = seats.stream().map(Seat::getStatus)
-                            .anyMatch(seatStatus -> seatStatus.equals(SeatStatus.BOOKED));
+            // 5. Mark seats as BOOKED
+            seatServiceClient.updateSeatStatus(seatIds, "BOOKED");
 
-                    if (anyBookedSeat) {
-                        // Remove lock for every seat
-                        seats.forEach(seat -> seatLockManager.removeLockForSeat(seat.getId()));
-                        throw new SeatAlreadyBookedException(SEAT_ALREADY_BOOKED, HttpStatus.BAD_REQUEST);
-                    }
+            // 6. Create reservation
+            Reservation reservation = Reservation.builder()
+                    .userId(userId)
+                    .showId(reservationRequestDto.getShowId())
+                    .seatsReservedIds(seatIds)
+                    .amountPaid(reservationRequestDto.getAmount())
+                    .reservationStatus(ReservationStatus.BOOKED)
+                    .build();
 
-                    // Mark all the seats as booked
-                    List<Seat> bookedSeats = seats.stream().map(seat -> {
-                        seat.setStatus(SeatStatus.BOOKED);
-                        return seatRepository.save(seat);
-                    }).toList();
+            return reservationRepository.save(reservation);
 
-                    // Create the reservation
-                    Reservation reservation = Reservation.builder()
-                            .reservationStatus(ReservationStatus.BOOKED)
-                            .seatsReserved(bookedSeats)
-                            .show(show)
-                            .user(userRepository.findByUsername(currentUserName).get())
-                            .amountPaid(reservationRequestDto.getAmount())
-                            .createdAt(LocalDateTime.now())
-                            .build();
+        } finally {
+            seatServiceClient.unlockSeats(seatIds);
+        }
 
-                    // Remove lock for every seat
-                    seats.forEach(seat -> seatLockManager.removeLockForSeat(seat.getId()));
-
-                    return reservationRepository.save(reservation);
-                })
-                .orElseThrow(() -> new ShowNotFoundException(SHOW_NOT_FOUND, HttpStatus.BAD_REQUEST));
     }
 
     @Override
@@ -121,32 +105,38 @@ public class ReservationServiceImpl implements ReservationService {
 
     }
 
+    @Transactional
     @Override
     public Reservation cancelReservation(long reservationId) {
-        return reservationRepository.findById(reservationId)
-                .map(reservationIdb -> {
-                    if (LocalDateTime.now().isAfter(reservationIdb.getShow().getStartTime()))
-                        throw new ShowStartedException(SHOW_STARTED_EXCEPTION, HttpStatus.BAD_REQUEST);
 
-                    reservationIdb.getSeatsReserved()
-                            .forEach(seat -> {
-                                seat.setStatus(SeatStatus.UNBOOKED);
-                                seatRepository.save(seat);
-                            });
-
-                    reservationIdb.setReservationStatus(ReservationStatus.CANCELED);
-                    return reservationRepository.save(reservationIdb);
-                })
+        Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND, HttpStatus.NOT_FOUND));
+
+        // Check if show hasn't started
+        ShowDto show = showServiceClient.getShowById(reservation.getShowId());
+        if (show.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new ShowStartedException(SHOW_STARTED_EXCEPTION, HttpStatus.BAD_REQUEST);
+        }
+
+        // Update seat status to UNBOOKED
+        seatServiceClient.updateSeatStatus(reservation.getSeatsReservedIds(), "UNBOOKED");
+
+        // Update reservation status
+        reservation.setReservationStatus(ReservationStatus.CANCELED);
+        return reservationRepository.save(reservation);
+
     }
 
     @Override
-    public PaginationResponse<Reservation> getAllReservationsForUser(String username, int page, int size) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new CustomException(USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+    public PaginationResponse<Reservation> getAllReservationsForUser(Long userId, int page, int size) {
+        UserDto user = userServiceClient.getUserById(userId);
+
+        if (user == null) {
+            throw new CustomException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Reservation> reservationPage = reservationRepository.findByUser(user, pageable);
+        Page<Reservation> reservationPage = reservationRepository.findByUserId(userId, pageable);
 
         return PaginationResponse.<Reservation>builder()
                 .pageNumber(reservationPage.getNumber())
