@@ -1,89 +1,103 @@
 package com.project.movie_reservation_system.service.impl;
 
-import com.project.movie_reservation_system.dto.PaginationResponse;
-import com.project.movie_reservation_system.dto.UserResponseDto;
-import com.project.movie_reservation_system.entity.Movie;
+import com.project.movie_reservation_system.dto.entity.UserDTO;
+import com.project.movie_reservation_system.dto.request.CreateUserRequest;
+import com.project.movie_reservation_system.dto.request.UpdateUserRequest;
+import com.project.movie_reservation_system.dto.response.PaginationResponse;
 import com.project.movie_reservation_system.entity.User;
-import com.project.movie_reservation_system.enums.Role;
+import com.project.movie_reservation_system.exception.UserNotFoundException;
 import com.project.movie_reservation_system.repository.UserRepository;
 import com.project.movie_reservation_system.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static com.project.movie_reservation_system.constant.ExceptionMessages.USER_NOT_FOUND;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
+        private final UserRepository userRepository;
 
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+        public UserServiceImpl(UserRepository userRepository) {
+                this.userRepository = userRepository;
+        }
 
-    public UserResponseDto getCurrentUser() {
-        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return userRepository.findByUsername(currentUsername)
-                .map(user -> UserResponseDto.builder()
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .role(user.getRole())
-                        .username(user.getUsername())
-                        .id(user.getId())
-                        .build()
-                )
-                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
-    }
+        public PaginationResponse<UserDTO> getAllUser(int page, int pageSize) {
+                Page<User> userPage = userRepository.findAll(PageRequest.of(page, pageSize));
+                List<UserDTO> userDTOs = userPage.stream()
+                                .map(user -> this.convertToDTO(user))
+                                .toList();
 
-    public PaginationResponse<UserResponseDto> getAllUser(int page, int pageSize) {
-        Page<User> userPage = userRepository.findAll(PageRequest.of(page, pageSize));
-        List<UserResponseDto> users = userPage.getContent()
-                .stream()
-                .map(user -> UserResponseDto.builder()
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .role(user.getRole())
-                        .username(user.getUsername())
-                        .id(user.getId())
-                        .build()
-                )
-                .toList();
+                return new PaginationResponse<>(
+                                userPage.getNumber(),
+                                userPage.getSize(),
+                                userPage.getTotalPages(),
+                                userPage.getTotalElements(),
+                                userDTOs);
+        }
 
-        return PaginationResponse.<UserResponseDto>builder()
-                .pageNumber(page)
-                .pageSize(pageSize)
-                .totalPages(userPage.getTotalPages())
-                .totalElements(userPage.getTotalElements())
-                .data(users)
-                .build();
-    }
+        @Override
+        public UserDTO createUser(CreateUserRequest request) {
+                User user = User.builder()
+                                .firstName(request.getFirstName())
+                                .lastName(request.getLastName())
+                                .username(request.getUsername())
+                                .email(request.getEmail()).build();
+                this.userRepository.save(user);
+                return this.convertToDTO(user);
+        }
 
-    public UserResponseDto promoteUserToAdmin(String username) {
-        return userRepository.findByUsername(username)
-                .map(userInDb -> {
-                    userInDb.setRole(Role.ROLE_ADMIN);
-                    return userRepository.save(userInDb);
-                })
-                .map(updatedUser -> UserResponseDto.builder()
-                        .email(updatedUser.getEmail())
-                        .firstName(updatedUser.getFirstName())
-                        .lastName(updatedUser.getLastName())
-                        .role(updatedUser.getRole())
-                        .username(updatedUser.getUsername())
-                        .id(updatedUser.getId())
-                        .build()
-                )
-                .orElseThrow(() -> new UsernameNotFoundException(USER_NOT_FOUND));
-    }
+        @Override
+        public UserDTO getUserById(Long id) {
+                Optional<User> userOptional = this.userRepository.findById(id);
+                if (userOptional.isPresent()) {
+                        return this.convertToDTO(userOptional.get());
+                } else {
+                        throw new UserNotFoundException(id);
+                }
+        }
 
+        @Override
+        public UserDTO updateUser(Long id, UpdateUserRequest request) {
+                User user = this.userRepository.findById(id).get();
+                if (user == null) {
+                        throw new UserNotFoundException(id);
+                }
 
+                if (request.getEmail() != null) {
+                        user.setEmail(request.getEmail());
+                }
+                if (request.getFirstName() != null) {
+                        user.setFirstName(request.getFirstName());
+                }
+                if (request.getLastName() != null) {
+                        user.setLastName(request.getLastName());
+                }
+                if (request.getUsername() != null) {
+                        user.setUsername(request.getUsername());
+                }
+
+                this.userRepository.save(user);
+                return this.convertToDTO(user);
+        }
+
+        @Override
+        public void deleteUser(Long id) {
+                User user = this.userRepository.findById(id).get();
+                if (user == null) {
+                        throw new UserNotFoundException(id);
+                }
+                this.userRepository.delete(user);
+        }
+
+        @Override
+        public UserDTO convertToDTO(User user) {
+                return UserDTO.builder()
+                                .email(user.getEmail())
+                                .firstName(user.getFirstName())
+                                .lastname(user.getLastName())
+                                .id(user.getId())
+                                .username(user.getUsername()).build();
+        }
 }

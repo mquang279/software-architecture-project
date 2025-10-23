@@ -1,4 +1,4 @@
-package com.project.movie_reservation_system.dto;
+package com.project.movie_reservation_system.dto.request;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,17 +1,12 @@
 package com.project.movie_reservation_system.entity;
 
-import com.project.movie_reservation_system.enums.Role;
+import java.time.Instant;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collection;
-import java.util.List;
 
 @Builder
 @NoArgsConstructor
@@ -19,22 +14,27 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String firstName;
     private String lastName;
     private String username;
     private String email;
+    private String passwordHash;
+    private String refreshToken;
+    private Instant createdAt;
+    private Instant updatedAt;
 
-    @Enumerated(value = EnumType.STRING)
-    private Role role;
-    private String password;
+    @PrePersist
+    public void handleBeforeCreate() {
+        this.createdAt = Instant.now();
+    }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+    @PostUpdate
+    public void handleAfterUpdate() {
+        this.updatedAt = Instant.now();
     }
 }

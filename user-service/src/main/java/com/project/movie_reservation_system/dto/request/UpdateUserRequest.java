@@ -1,14 +1,11 @@
-package com.project.movie_reservation_system.dto;
+package com.project.movie_reservation_system.dto.request;
 
-import lombok.Builder;
 import lombok.Data;
 
-@Builder
 @Data
-public class SignupRequestDto {
+public class UpdateUserRequest {
     private String firstName;
     private String lastName;
     private String username;
     private String email;
-    private String password;
 }
