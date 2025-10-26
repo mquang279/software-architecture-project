@@ -2,7 +2,6 @@ package com.project.movie_reservation_system.service.impl;
 
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.dto.TheaterRequestDto;
-import com.project.movie_reservation_system.entity.Show;
 import com.project.movie_reservation_system.entity.Theater;
 import com.project.movie_reservation_system.exception.TheaterNotFoundException;
 import com.project.movie_reservation_system.repository.TheaterRepository;
