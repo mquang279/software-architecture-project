@@ -4,6 +4,7 @@ import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.dto.ShowRequestDto;
 import com.project.movie_reservation_system.entity.Show;
+import com.project.movie_reservation_system.service.ShowService;
 import com.project.movie_reservation_system.service.impl.ShowServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/shows")
 public class ShowController {
 
-    private final ShowServiceImpl showService;
+    private final ShowService showService;
 
     @Autowired
-    public ShowController(ShowServiceImpl showService) {
+    public ShowController(ShowService showService) {
         this.showService = showService;
     }
 
@@ -45,21 +46,17 @@ public class ShowController {
     }
 
     @GetMapping("/{showId}")
-    public ResponseEntity<ApiResponse<Show>> getShowById(@PathVariable long showId){
+    public ResponseEntity<Show> getShowById(@PathVariable long showId){
         Show show = showService.getShowById(showId);
-        return ResponseEntity.ok(
-                ApiResponse.success("Fetched show with id: " + showId, show)
-        );
+        return ResponseEntity.ok(show);
     }
 
     @PostMapping("")
-    public ResponseEntity<ApiResponse<Show>> createShow(@RequestBody ShowRequestDto showRequestDto){
+    public ResponseEntity<Show> createShow(@RequestBody ShowRequestDto showRequestDto){
         Show show = showService.createNewShow(showRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(
-                        ApiResponse.success("Show created successfully: " + show.getId(), show)
-                );
+                .body(show);
     }
 
 //    @PatchMapping("/movie/{showId}")

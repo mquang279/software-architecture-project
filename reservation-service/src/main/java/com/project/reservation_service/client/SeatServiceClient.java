@@ -10,15 +10,15 @@ import java.util.List;
 @FeignClient(name = "seat-service")
 public interface SeatServiceClient {
 
-    @GetMapping("/api/seats/{seatId}")
+    @GetMapping("/api/v1/seats/{seatId}")
     SeatDto getSeatById(@PathVariable Long seatId);
 
-    @PostMapping("/api/seats/lock")
+    @PostMapping("/api/v1/seats/lock")
     void lockSeats(@RequestBody List<Long> seatIds);
 
-    @PostMapping("/api/seats/unlock")
+    @PostMapping("/api/v1/seats/unlock")
     void unlockSeats(@RequestBody List<Long> seatIds);
 
-    @PutMapping("/api/seats/status")
+    @PutMapping("/api/v1/seats/status")
     void updateSeatStatus(@RequestBody List<Long> seatIds, @RequestParam String status);
 }
