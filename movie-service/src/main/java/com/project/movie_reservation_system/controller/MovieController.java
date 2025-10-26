@@ -29,25 +29,24 @@ public class MovieController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Movie>> getMovieById(@PathVariable long id) {
+    public ResponseEntity<Movie> getMovieById(@PathVariable long id) {
         Movie movie = movieService.getMovieById(id);
-        return ResponseEntity.ok(
-                ApiResponse.success("Fetched movie with id: " + id, movie));
+        return ResponseEntity.ok(movie);
     }
 
     @PostMapping("")
-    public ResponseEntity<ApiResponse<Movie>> createNewMovie(@RequestBody MovieRequestDto movieRequestDto) {
+    public ResponseEntity<Movie> createNewMovie(@RequestBody MovieRequestDto movieRequestDto) {
         Movie movie = movieService.createMovie(movieRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Movie created successfully.", movie));
+                .body(movie);
     }
 
     @PutMapping("/{movieId}")
-    public ResponseEntity<ApiResponse<Movie>> updateMovieById(@PathVariable long id,
+    public ResponseEntity<Movie> updateMovieById(@PathVariable long id,
             @RequestBody MovieRequestDto movieRequestDto) {
         Movie movie = movieService.updateMovieById(id, movieRequestDto);
         return ResponseEntity.ok()
-                .body(ApiResponse.success("Movie with id " + id + " updated successfully", movie));
+                .body(movie);
     }
 
     @DeleteMapping("/{movieId}")
