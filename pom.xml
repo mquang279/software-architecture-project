@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.9</version>
+        <version>3.5.7</version>
         <relativePath/>
     </parent>
 
@@ -33,7 +33,7 @@
 
     <properties>
         <java.version>17</java.version>
-    <spring-cloud.version>2023.0.5</spring-cloud.version>
+    <spring-cloud.version>2025.0.0</spring-cloud.version>
         <jjwt.version>0.12.6</jjwt.version>
     <lombok.version>1.18.42</lombok.version>
         <spring-dotenv.version>4.0.0</spring-dotenv.version>
