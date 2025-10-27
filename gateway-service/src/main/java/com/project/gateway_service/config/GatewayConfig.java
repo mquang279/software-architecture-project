@@ -32,6 +32,9 @@ public class GatewayConfig {
                                 .route("seat-service", r -> r
                                                 .path("/api/v1/seats/**")
                                                 .uri("lb://seat-service"))
+                                .route("notification-service", r -> r
+                                        .path("/api/v1/notifications/**")
+                                        .uri("lb://notification-service"))
                                 .build();
         }
 }
