@@ -47,28 +47,26 @@ public class ReservationController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Reservation>> createReservation(
+    public ResponseEntity<Reservation> createReservation(
             @RequestBody ReservationRequestDto reservationRequestDto, Long userId) {
 //        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Reservation reservation = reservationService.createReservation(reservationRequestDto, userId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Reservation created with id: " + reservation.getId(), reservation));
+                .body(reservation);
     }
 
     @GetMapping("/{reservationId}")
-    public ResponseEntity<ApiResponse<Reservation>> getReservationById(@PathVariable long reservationId) {
+    public ResponseEntity<Reservation> getReservationById(@PathVariable long reservationId) {
         Reservation reservation = reservationService.getReservationById(reservationId);
-        return ResponseEntity.ok(
-                ApiResponse.success("Reservation fetched with id: " + reservation.getId(), reservation));
+        return ResponseEntity.ok(reservation);
     }
 
     @DeleteMapping("/{reservationId}")
-    public ResponseEntity<ApiResponse<Reservation>> cancelReservation(@PathVariable long reservationId) {
+    public ResponseEntity<Reservation> cancelReservation(@PathVariable long reservationId) {
         Reservation reservation = reservationService.cancelReservation(reservationId);
-        return ResponseEntity.ok(
-                ApiResponse.success("Reservation canceled", reservation));
+        return ResponseEntity.ok(reservation);
     }
 
 }

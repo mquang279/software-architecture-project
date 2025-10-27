@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ShowRepository extends JpaRepository<Show, Long> {
-    Page<Show> findByTheaterId(long theaterId, Pageable pageable);
     Page<Show> findByMovieId(long movieId, Pageable pageable);
     Page<Show> findByTheaterIdAndMovieId(long theaterId,long movieId, Pageable pageable);
 }

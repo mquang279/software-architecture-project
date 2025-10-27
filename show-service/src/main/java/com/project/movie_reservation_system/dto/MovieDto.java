@@ -1,20 +1,21 @@
 package com.project.movie_reservation_system.dto;
 
 import com.project.movie_reservation_system.enums.MovieGenre;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 @Data
-@Builder
-public class MovieRequestDto {
-
+@AllArgsConstructor
+@NoArgsConstructor
+public class MovieDto {
+    Long id;
     String movieName;
-    List<String> genre;
+    List<MovieGenre> genre;
     int movieLength;
     String movieLanguage;
-    String releaseDate;
-
+    Instant releaseDate;
 }

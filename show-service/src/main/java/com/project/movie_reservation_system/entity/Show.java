@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,18 +19,14 @@ public class Show {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    long id;
+    Long id;
+    Long movieId;
+    Long theaterId;
+    Instant startTime;
+    Instant endTime;
 
-    @ManyToOne(targetEntity = Movie.class)
-    @JoinColumn(referencedColumnName = "id", nullable = false)
-    Movie movie;
-
-    @ManyToOne()
-    Theater theater;
-    LocalDateTime startTime;
-    LocalDateTime endTime;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    List<Seat> seats;
-
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "show_seats", joinColumns = @JoinColumn(name = "show_id"))
+    @Column(name = "seat_id")
+    List<Long> seatsIds;
 }

@@ -1,16 +1,14 @@
 package com.project.movie_reservation_system.service.impl;
 
-import com.project.movie_reservation_system.dto.PaginationResponse;
-import com.project.movie_reservation_system.dto.ShowRequestDto;
-import com.project.movie_reservation_system.entity.Seat;
+import com.project.movie_reservation_system.client.MovieServiceClient;
+import com.project.movie_reservation_system.client.SeatServiceClient;
+import com.project.movie_reservation_system.client.TheaterServiceClient;
+import com.project.movie_reservation_system.dto.*;
 import com.project.movie_reservation_system.entity.Show;
 import com.project.movie_reservation_system.exception.MovieNotFoundException;
 import com.project.movie_reservation_system.exception.ShowNotFoundException;
 import com.project.movie_reservation_system.exception.TheaterNotFoundException;
-import com.project.movie_reservation_system.repository.MovieRepository;
 import com.project.movie_reservation_system.repository.ShowRepository;
-import com.project.movie_reservation_system.repository.TheaterRepository;
-import com.project.movie_reservation_system.service.SeatService;
 import com.project.movie_reservation_system.service.ShowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,7 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,45 +26,54 @@ import static com.project.movie_reservation_system.constant.ExceptionMessages.*;
 public class ShowServiceImpl implements ShowService {
 
     private final ShowRepository showRepository;
-    private final MovieRepository movieRepository;
-    private final TheaterRepository theaterRepository;
-    private final SeatService seatService;
+    private final MovieServiceClient movieServiceClient;
+    private final TheaterServiceClient theaterServiceClient;
+    private final SeatServiceClient seatServiceClient;
 
     @Autowired
-    public ShowServiceImpl(ShowRepository showRepository, MovieRepository movieRepository, TheaterRepository theaterRepository, SeatService seatService) {
+    public ShowServiceImpl(ShowRepository showRepository, MovieServiceClient movieServiceClient, TheaterServiceClient theaterServiceClient, SeatServiceClient seatServiceClient) {
         this.showRepository = showRepository;
-        this.movieRepository = movieRepository;
-        this.theaterRepository = theaterRepository;
-        this.seatService = seatService;
+        this.movieServiceClient = movieServiceClient;
+        this.theaterServiceClient = theaterServiceClient;
+        this.seatServiceClient = seatServiceClient;
     }
 
     public Show createNewShow(ShowRequestDto showRequestDto) {
-        return movieRepository.findById(showRequestDto.getMovieId())
-                .map(movie -> theaterRepository.findById(showRequestDto.getTheaterId())
-                        .map(theater -> {
-                            List<Seat> seats = new ArrayList<>();
-                            showRequestDto.getSeats()
-                                    .forEach(seatStructure ->
-                                            seats.addAll(
-                                                    seatService.createSeatsWithGivenPrice(
-                                                            seatStructure.getSeatCount(),
-                                                            seatStructure.getSeatPrice(),
-                                                            seatStructure.getArea()
-                                                    )
-                                            )
-                                    );
+        MovieDto movie = movieServiceClient.getMovieById(showRequestDto.getMovieId());
+        if (movie == null) {
+            throw new MovieNotFoundException(MOVIE_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
+        TheaterDto theater = theaterServiceClient.getTheaterById(showRequestDto.getTheaterId());
+        if (theater == null) {
+            throw new TheaterNotFoundException(THEATER_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
+        List<SeatDto> seats = new ArrayList<>();
+        showRequestDto.getSeats()
+                .forEach(seatStructure ->
+                        seats.addAll(
+                                seatServiceClient.createSeatsWithGivenPrice(
+                                        seatStructure.getSeatCount(),
+                                        seatStructure.getSeatPrice(),
+                                        seatStructure.getArea()
+                                )
+                        )
+                );
 
-                            Show show = Show.builder()
-                                    .movie(movie)
-                                    .theater(theater)
-                                    .startTime(LocalDateTime.parse(showRequestDto.getStartTime()))
-                                    .endTime(LocalDateTime.parse(showRequestDto.getEndTime()))
-                                    .seats(seats)
-                                    .build();
-                            return showRepository.save(show);
-                        })
-                        .orElseThrow(() -> new TheaterNotFoundException(THEATER_NOT_FOUND, HttpStatus.BAD_REQUEST)))
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND, HttpStatus.BAD_REQUEST));
+        List<Long> seatIds = new ArrayList<>();
+        for (SeatDto seat : seats) {
+            seatIds.add(seat.getId());
+        }
+
+
+        Show show = Show.builder()
+                .movieId(showRequestDto.getMovieId())
+                .theaterId(showRequestDto.getTheaterId())
+                .seatsIds(seatIds)
+                .startTime(Instant.parse(showRequestDto.getStartTime()))
+                .endTime(Instant.parse(showRequestDto.getEndTime()))
+                .build();
+        
+        return showRepository.save(show);
     }
 
     public PaginationResponse<Show> getllShows(int page, int size) {
