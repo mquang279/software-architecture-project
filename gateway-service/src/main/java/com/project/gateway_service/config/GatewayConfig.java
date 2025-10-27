@@ -29,6 +29,9 @@ public class GatewayConfig {
                                 .route("reservation-service", r -> r
                                                 .path("/api/v1/reservations/**")
                                                 .uri("lb://reservation-service"))
+                                .route("seat-service", r -> r
+                                                .path("/api/v1/seats/**")
+                                                .uri("lb://seat-service"))
                                 .build();
         }
 }
