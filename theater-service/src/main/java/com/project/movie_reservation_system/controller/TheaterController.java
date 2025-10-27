@@ -42,30 +42,25 @@ public class TheaterController {
     }
 
     @GetMapping("/{theaterId}")
-    public ResponseEntity<ApiResponse<Theater>> getTheaterById(@PathVariable long theaterId){
+    public ResponseEntity<Theater> getTheaterById(@PathVariable long theaterId){
         Theater theater = theaterService.getTheaterById(theaterId);
-        return ResponseEntity.ok(
-                ApiResponse.success("Fetched theater with id: " + theaterId, theater)
-        );
+        return ResponseEntity.ok(theater);
     }
 
 
     @PostMapping("")
-    public ResponseEntity<ApiResponse<Theater>> createTheater(@RequestBody TheaterRequestDto theaterRequestDto){
+    public ResponseEntity<Theater> createTheater(@RequestBody TheaterRequestDto theaterRequestDto){
         Theater theater = theaterService.createNewTheater(theaterRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(
-                        ApiResponse.success("Theater created successfully: " + theater.getId(), theater)
-                );
+                .body(theater);
+
     }
 
     @PutMapping("{theaterId}")
-    public ResponseEntity<ApiResponse<Theater>> updateTheaterById(@PathVariable long theaterId, @RequestBody TheaterRequestDto theaterRequestDto){
+    public ResponseEntity<Theater> updateTheaterById(@PathVariable long theaterId, @RequestBody TheaterRequestDto theaterRequestDto){
         Theater updatedTheater = theaterService.updateTheaterById(theaterId, theaterRequestDto);
-        return ResponseEntity.ok(
-                ApiResponse.success("Theater with id " + theaterId + " updated successfully", updatedTheater)
-        );
+        return ResponseEntity.ok(updatedTheater);
     }
 
 

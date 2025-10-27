@@ -17,6 +17,18 @@ public class GatewayConfig {
                                 .route("user-service", r -> r
                                                 .path("/users/**")
                                                 .uri("lb://user-service"))
+                                .route("movie-service", r -> r
+                                                .path("/movies/**")
+                                                .uri("lb://movie-service"))
+                                .route("theater-service", r -> r
+                                                .path("/api/v1/theaters/**")
+                                                .uri("lb://theater-service"))
+                                .route("show-service", r -> r
+                                                .path("/api/v1/shows/**")
+                                                .uri("lb://show-service"))
+                                .route("reservation-service", r -> r
+                                                .path("/api/v1/reservations/**")
+                                                .uri("lb://reservation-service"))
                                 .build();
         }
 }

@@ -1,5 +1,6 @@
 package com.project.reservation_service.dto;
 
+import com.project.reservation_service.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,5 +14,7 @@ public class UserDto {
     private String lastname;
     private String username;
     private String email;
+    private String passwordHash;
+    private Role role;
 
 }

@@ -11,5 +11,4 @@ public class TheaterDto {
     Long id;
     String name;
     String location;
-
 }

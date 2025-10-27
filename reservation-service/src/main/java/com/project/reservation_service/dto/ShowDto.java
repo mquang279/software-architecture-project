@@ -11,14 +11,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShowDto {
-    
     private long id;
     private Long movieId;
     private Long theaterId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<Long> seatIds;
-    private String movieTitle;    
-    private String theaterName;   
-    private String theaterLocation; 
 }
