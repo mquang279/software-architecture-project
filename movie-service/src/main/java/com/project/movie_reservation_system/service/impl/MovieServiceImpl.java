@@ -41,7 +41,7 @@ public class MovieServiceImpl implements MovieService {
 
     public Movie getMovieById(long id) {
         return movieRepository.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new MovieNotFoundException(id));
     }
 
     public Movie createMovie(MovieRequestDto movieRequestDto) {
@@ -68,7 +68,7 @@ public class MovieServiceImpl implements MovieService {
 
                     return movieRepository.save(movieInDb);
                 })
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new MovieNotFoundException(movieId));
     }
 
     public void deleteMovieById(long movieId) {
