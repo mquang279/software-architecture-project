@@ -1,10 +1,12 @@
 package com.project.movie_reservation_system.exception;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.http.HttpStatus;
 
 @Data
-public class CustomException extends RuntimeException{
+@EqualsAndHashCode(callSuper=false)
+public class CustomException extends RuntimeException {
     String message;
     HttpStatus httpStatus;
 

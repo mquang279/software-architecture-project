@@ -2,11 +2,8 @@ package com.project.reservation_service.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.project.reservation_service.dto.ApiResponse;
 import com.project.reservation_service.dto.PaginationResponse;
 import com.project.reservation_service.dto.ReservationRequestDto;
 import com.project.reservation_service.entity.Reservation;
@@ -27,14 +24,11 @@ public class ReservationController {
             @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-//        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         PaginationResponse<Reservation> paginationResponse = reservationService
                 .getAllReservationsForUser(userId, page, size);
-
         return ResponseEntity.ok(paginationResponse);
     }
 
-    @Secured({ "ROLE_ADMIN", "ROLE_SUPER_ADMIN" })
     @GetMapping("/filter")
     public ResponseEntity<PaginationResponse<Reservation>> filterReservations(
             @RequestParam(required = false) long theaterId,
@@ -49,7 +43,6 @@ public class ReservationController {
     @PostMapping
     public ResponseEntity<Reservation> createReservation(
             @RequestBody ReservationRequestDto reservationRequestDto, Long userId) {
-//        String currentUserName = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Reservation reservation = reservationService.createReservation(reservationRequestDto, userId);
 
         return ResponseEntity

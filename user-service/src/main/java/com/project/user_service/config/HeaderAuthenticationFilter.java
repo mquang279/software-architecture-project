@@ -1,4 +1,4 @@
-package com.project.auth_service.config;
+package com.project.user_service.config;
 
 import java.io.IOException;
 import java.util.ArrayList;
