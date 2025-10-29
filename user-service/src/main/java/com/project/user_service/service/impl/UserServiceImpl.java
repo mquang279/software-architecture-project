@@ -10,6 +10,7 @@ import com.project.user_service.dto.request.RegistrationRequest;
 import com.project.user_service.dto.request.UpdateUserRequest;
 import com.project.user_service.dto.response.PaginationResponse;
 import com.project.user_service.entity.User;
+import com.project.user_service.exception.EmailAlreadyExistException;
 import com.project.user_service.exception.UserNotFoundException;
 import com.project.user_service.repository.UserRepository;
 import com.project.user_service.service.UserService;
@@ -41,6 +42,10 @@ public class UserServiceImpl implements UserService {
 
         @Override
         public UserDTO createUser(CreateUserRequest request) {
+                Optional<User> userOptional = this.userRepository.findByEmail(request.getEmail());
+                if (userOptional.isPresent()) {
+                        throw new EmailAlreadyExistException();
+                }
                 User user = User.builder()
                                 .firstName(request.getFirstName())
                                 .lastName(request.getLastName())
@@ -112,12 +117,16 @@ public class UserServiceImpl implements UserService {
                 if (user.isPresent()) {
                         return this.convertToDTO(user.get());
                 } else {
-                        throw new UserNotFoundException();
+                        throw new UserNotFoundException("User with this email is not existed");
                 }
         }
 
         @Override
         public UserDTO createUser(RegistrationRequest request) {
+                Optional<User> userOptional = this.userRepository.findByEmail(request.getEmail());
+                if (userOptional.isPresent()) {
+                        throw new EmailAlreadyExistException();
+                }
                 User user = User.builder()
                                 .username(request.getUsername())
                                 .email(request.getEmail())
