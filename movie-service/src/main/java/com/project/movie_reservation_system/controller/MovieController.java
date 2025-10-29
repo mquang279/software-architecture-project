@@ -1,6 +1,5 @@
 package com.project.movie_reservation_system.controller;
 
-import com.project.movie_reservation_system.dto.ApiResponse;
 import com.project.movie_reservation_system.dto.MovieRequestDto;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Movie;
@@ -50,7 +49,7 @@ public class MovieController {
     }
 
     @DeleteMapping("/{movieId}")
-    public ResponseEntity<?> deleteMovieById(@PathVariable long movieId) {
+    public ResponseEntity<Void> deleteMovieById(@PathVariable long movieId) {
         movieService.deleteMovieById(movieId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

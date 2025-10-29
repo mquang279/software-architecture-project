@@ -1,10 +1,8 @@
 package com.project.movie_reservation_system.exception;
 
-import org.springframework.http.HttpStatus;
+public class SeatLockAcquiredException extends RuntimeException {
 
-public class SeatLockAcquiredException extends CustomException{
-
-    public SeatLockAcquiredException(String message, HttpStatus httpStatus) {
-        super(message, httpStatus);
+    public SeatLockAcquiredException() {
+        super("Failed to acquire lock on seat. The seat may already be locked by another user.");
     }
 }

@@ -6,22 +6,17 @@ import com.project.movie_reservation_system.entity.Theater;
 import com.project.movie_reservation_system.exception.TheaterNotFoundException;
 import com.project.movie_reservation_system.repository.TheaterRepository;
 import com.project.movie_reservation_system.service.TheaterService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static com.project.movie_reservation_system.constant.ExceptionMessages.THEATER_NOT_FOUND;
 
 @Service
 public class TheaterServiceImpl implements TheaterService {
 
     private final TheaterRepository theaterRepository;
 
-    @Autowired
     public TheaterServiceImpl(TheaterRepository theaterRepository) {
         this.theaterRepository = theaterRepository;
     }
@@ -47,7 +42,6 @@ public class TheaterServiceImpl implements TheaterService {
                 .build();
     }
 
-
     public PaginationResponse<Theater> getAllTheatersByLocation(int page, int size, String location) {
         Page<Theater> theaterPage = theaterRepository.findAllByLocation(location, PageRequest.of(page, size));
         List<Theater> theaters = theaterPage.getContent();
@@ -63,7 +57,7 @@ public class TheaterServiceImpl implements TheaterService {
 
     public Theater getTheaterById(long theaterId) {
         return theaterRepository.findById(theaterId)
-                .orElseThrow(() -> new TheaterNotFoundException(THEATER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new TheaterNotFoundException(theaterId));
     }
 
     public void deleteTheaterById(long theaterId) {
@@ -77,6 +71,6 @@ public class TheaterServiceImpl implements TheaterService {
                     theater.setLocation(theater.getLocation());
                     return theaterRepository.save(theater);
                 })
-                .orElseThrow(() -> new TheaterNotFoundException(THEATER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new TheaterNotFoundException(theaterId));
     }
 }
