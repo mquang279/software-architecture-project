@@ -24,7 +24,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(c -> c.disable())
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(
+                .authorizeHttpRequests( 
                         (authz) -> authz
                                 .anyRequest().permitAll())
                 .addFilterBefore(headerAuthenticationFilter(), AuthorizationFilter.class)
