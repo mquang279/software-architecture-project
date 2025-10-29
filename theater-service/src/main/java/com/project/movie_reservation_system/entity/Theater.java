@@ -14,7 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 public class Theater {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     long id;

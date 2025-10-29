@@ -1,6 +1,6 @@
-package com.project.reservation_service.dto;
+package com.project.movie_reservation_system.dto;
 
-import com.project.reservation_service.enums.Role;
+import com.project.movie_reservation_system.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,5 +16,4 @@ public class UserDto {
     private String email;
     private String passwordHash;
     private Role role;
-
 }

@@ -16,7 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Movie {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     long id;
@@ -27,5 +26,4 @@ public class Movie {
     int movieLength;
     String movieLanguage;
     LocalDate releaseDate;
-
 }

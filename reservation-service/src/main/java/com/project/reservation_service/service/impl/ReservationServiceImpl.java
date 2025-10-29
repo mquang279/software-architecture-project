@@ -1,5 +1,8 @@
 package com.project.reservation_service.service.impl;
 
+import com.project.reservation_service.client.NotificationServiceClient;
+import com.project.reservation_service.dto.*;
+import com.project.reservation_service.enums.NotificationType;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,10 +15,6 @@ import org.springframework.stereotype.Service;
 import com.project.reservation_service.client.SeatServiceClient;
 import com.project.reservation_service.client.ShowServiceClient;
 import com.project.reservation_service.client.UserServiceClient;
-import com.project.reservation_service.dto.PaginationResponse;
-import com.project.reservation_service.dto.ReservationRequestDto;
-import com.project.reservation_service.dto.ShowDto;
-import com.project.reservation_service.dto.UserDto;
 import com.project.reservation_service.entity.Reservation;
 import com.project.reservation_service.enums.ReservationStatus;
 import com.project.reservation_service.exception.*;
@@ -36,18 +35,21 @@ public class ReservationServiceImpl implements ReservationService {
     private final UserServiceClient userServiceClient;
     private final ShowServiceClient showServiceClient;
     private final SeatServiceClient seatServiceClient;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Autowired
     public ReservationServiceImpl(
             ReservationRepository reservationRepository,
             UserServiceClient userServiceClient,
             ShowServiceClient showServiceClient,
-            SeatServiceClient seatServiceClient
+            SeatServiceClient seatServiceClient,
+            NotificationServiceClient notificationServiceClient
             ) {
           this.reservationRepository = reservationRepository;
           this.userServiceClient = userServiceClient;
           this.showServiceClient = showServiceClient;
           this.seatServiceClient = seatServiceClient;
+          this.notificationServiceClient = notificationServiceClient;
     }
 
     @Transactional
@@ -90,8 +92,27 @@ public class ReservationServiceImpl implements ReservationService {
                     .reservationStatus(ReservationStatus.BOOKED)
                     .build();
 
-            return reservationRepository.save(reservation);
+            reservationRepository.save(reservation);
 
+
+            String payload = String.format(
+                    "Đặt vé thành công! Mã đặt chỗ: #%d.Chiếu: %s lúc %s. Số ghế: %d. Tổng tiền: %.0f VND.",
+                    reservation.getId(),
+                    show.getMovieId(),
+                    show.getStartTime(),
+                    reservation.getSeatsReservedIds().size(),
+                    reservation.getAmountPaid()
+            );
+
+
+            NotificationRequestDto notificationRequestDto = NotificationRequestDto.builder()
+                    .userId(userId)
+                    .type(NotificationType.RESERVATION)
+                    .payload(payload)
+                    .build();
+
+            notificationServiceClient.addNotification(notificationRequestDto);
+            return reservation;
         } finally {
             seatServiceClient.unlockSeats(seatIds);
         }
@@ -123,6 +144,20 @@ public class ReservationServiceImpl implements ReservationService {
 
         // Update reservation status
         reservation.setReservationStatus(ReservationStatus.CANCELED);
+
+        String payload = String.format(
+                "Huỷ vé thành công! Mã đặt chỗ: #%d. Số tiền hoàn: %.0f VND sẽ được hoàn lại trong 3-5 ngày làm việc.",
+                reservation.getId(),
+                reservation.getAmountPaid()
+        );
+
+        NotificationRequestDto notificationRequestDto = NotificationRequestDto.builder()
+                .userId(reservation.getUserId())
+                .type(NotificationType.RESERVATION)
+                .payload(payload)
+                .build();
+
+        notificationServiceClient.addNotification(notificationRequestDto);
         return reservationRepository.save(reservation);
 
     }
