@@ -30,8 +30,8 @@ public class ShowServiceImpl implements ShowService {
     private final TheaterServiceClient theaterServiceClient;
     private final SeatServiceClient seatServiceClient;
 
-    @Autowired
-    public ShowServiceImpl(ShowRepository showRepository, MovieServiceClient movieServiceClient, TheaterServiceClient theaterServiceClient, SeatServiceClient seatServiceClient) {
+    public ShowServiceImpl(ShowRepository showRepository, MovieServiceClient movieServiceClient,
+            TheaterServiceClient theaterServiceClient, SeatServiceClient seatServiceClient) {
         this.showRepository = showRepository;
         this.movieServiceClient = movieServiceClient;
         this.theaterServiceClient = theaterServiceClient;
@@ -49,21 +49,16 @@ public class ShowServiceImpl implements ShowService {
         }
         List<SeatDto> seats = new ArrayList<>();
         showRequestDto.getSeats()
-                .forEach(seatStructure ->
-                        seats.addAll(
-                                seatServiceClient.createSeatsWithGivenPrice(
-                                        seatStructure.getSeatCount(),
-                                        seatStructure.getSeatPrice(),
-                                        seatStructure.getArea()
-                                )
-                        )
-                );
+                .forEach(seatStructure -> seats.addAll(
+                        seatServiceClient.createSeatsWithGivenPrice(
+                                seatStructure.getSeatCount(),
+                                seatStructure.getSeatPrice(),
+                                seatStructure.getArea())));
 
         List<Long> seatIds = new ArrayList<>();
         for (SeatDto seat : seats) {
             seatIds.add(seat.getId());
         }
-
 
         Show show = Show.builder()
                 .movieId(showRequestDto.getMovieId())
@@ -72,7 +67,7 @@ public class ShowServiceImpl implements ShowService {
                 .startTime(Instant.parse(showRequestDto.getStartTime()))
                 .endTime(Instant.parse(showRequestDto.getEndTime()))
                 .build();
-        
+
         return showRepository.save(show);
     }
 
@@ -93,12 +88,13 @@ public class ShowServiceImpl implements ShowService {
         showRepository.deleteById(showId);
     }
 
-    public PaginationResponse<Show> filterShowsByTheaterIdAndMovieId(Long theaterId, Long movieId, PageRequest pageRequest) {
+    public PaginationResponse<Show> filterShowsByTheaterIdAndMovieId(Long theaterId, Long movieId,
+            PageRequest pageRequest) {
         Page<Show> showPage;
 
-        if(theaterId == null && movieId == null){
+        if (theaterId == null && movieId == null) {
             showPage = showRepository.findAll(pageRequest);
-        } else if(theaterId == null) {
+        } else if (theaterId == null) {
             showPage = showRepository.findByMovieId(movieId, pageRequest);
         } else {
             showPage = showRepository.findByTheaterIdAndMovieId(theaterId, movieId, pageRequest);

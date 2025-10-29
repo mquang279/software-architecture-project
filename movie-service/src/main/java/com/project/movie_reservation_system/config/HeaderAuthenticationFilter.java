@@ -1,4 +1,4 @@
-package com.project.auth_service.config;
+package com.project.movie_reservation_system.config;
 
 import java.io.IOException;
 import java.util.ArrayList;
