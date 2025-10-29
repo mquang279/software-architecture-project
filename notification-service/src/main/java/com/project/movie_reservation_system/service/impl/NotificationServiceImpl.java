@@ -2,14 +2,13 @@ package com.project.movie_reservation_system.service.impl;
 
 import com.project.movie_reservation_system.client.UserServiceClient;
 import com.project.movie_reservation_system.dto.NotificationRequestDto;
-import com.project.movie_reservation_system.dto.NotificationResponseDto;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.dto.UserDto;
 import com.project.movie_reservation_system.entity.Notification;
+import com.project.movie_reservation_system.exception.NotificationNotFoundException;
 import com.project.movie_reservation_system.repository.NotificationRepository;
 import com.project.movie_reservation_system.service.NotificationService;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,6 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserServiceClient userServiceClient;
 
-    @Autowired
     public NotificationServiceImpl(NotificationRepository notificationRepository, UserServiceClient userServiceClient) {
         this.notificationRepository = notificationRepository;
         this.userServiceClient = userServiceClient;
@@ -42,7 +40,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public Notification updateNotificationById(Long notificationId, NotificationRequestDto notificationRequestDTO) {
 
-        Notification updatedNotification =  notificationRepository.findById(notificationId)
+        Notification updatedNotification = notificationRepository.findById(notificationId)
                 .map(notificationInDb -> {
                     if (notificationRequestDTO.getPayload() != null) {
                         notificationInDb.setPayload(notificationRequestDTO.getPayload());
@@ -52,14 +50,14 @@ public class NotificationServiceImpl implements NotificationService {
                     }
                     return notificationRepository.save(notificationInDb);
                 })
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new NotificationNotFoundException());
 
         return updatedNotification;
     }
 
     public Notification getNotificationById(Long notificationId) {
         return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new NotificationNotFoundException());
     }
 
     public PaginationResponse<Notification> getNotificationsByUserId(Long userId, int page, int size) {
@@ -71,13 +69,12 @@ public class NotificationServiceImpl implements NotificationService {
                 size,
                 notificationPage.getTotalPages(),
                 notificationPage.getTotalElements(),
-                notifications
-        );
+                notifications);
 
     }
 
     @Transactional
-    public void  deleteNotificationById(Long notificationId) {
+    public void deleteNotificationById(Long notificationId) {
         try {
             notificationRepository.deleteById(notificationId);
         } catch (RuntimeException e) {
