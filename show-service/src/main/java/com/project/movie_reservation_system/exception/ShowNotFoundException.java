@@ -1,10 +1,7 @@
 package com.project.movie_reservation_system.exception;
 
-import org.springframework.http.HttpStatus;
-
-public class ShowNotFoundException extends CustomException{
-
-    public ShowNotFoundException(String message, HttpStatus httpStatus) {
-        super(message, httpStatus);
+public class ShowNotFoundException extends RuntimeException {
+    public ShowNotFoundException(long id) {
+        super("Show with id " + id + " not exist");
     }
 }

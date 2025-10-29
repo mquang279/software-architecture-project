@@ -5,9 +5,7 @@ import com.project.movie_reservation_system.client.SeatServiceClient;
 import com.project.movie_reservation_system.client.TheaterServiceClient;
 import com.project.movie_reservation_system.dto.*;
 import com.project.movie_reservation_system.entity.Show;
-import com.project.movie_reservation_system.exception.MovieNotFoundException;
 import com.project.movie_reservation_system.exception.ShowNotFoundException;
-import com.project.movie_reservation_system.exception.TheaterNotFoundException;
 import com.project.movie_reservation_system.repository.ShowRepository;
 import com.project.movie_reservation_system.service.ShowService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,13 +38,7 @@ public class ShowServiceImpl implements ShowService {
 
     public Show createNewShow(ShowRequestDto showRequestDto) {
         MovieDto movie = movieServiceClient.getMovieById(showRequestDto.getMovieId());
-        if (movie == null) {
-            throw new MovieNotFoundException(MOVIE_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
         TheaterDto theater = theaterServiceClient.getTheaterById(showRequestDto.getTheaterId());
-        if (theater == null) {
-            throw new TheaterNotFoundException(THEATER_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
         List<SeatDto> seats = new ArrayList<>();
         showRequestDto.getSeats()
                 .forEach(seatStructure -> seats.addAll(
@@ -111,6 +103,6 @@ public class ShowServiceImpl implements ShowService {
 
     public Show getShowById(long showId) {
         return showRepository.findById(showId)
-                .orElseThrow(() -> new ShowNotFoundException(SHOW_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ShowNotFoundException(showId));
     }
 }
