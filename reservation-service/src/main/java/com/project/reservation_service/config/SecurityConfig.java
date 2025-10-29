@@ -1,4 +1,4 @@
-package com.project.user_service.config;
+package com.project.reservation_service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +26,6 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(
                         (authz) -> authz
-                                // .requestMatchers(HttpMethod.GET, "/users").hasRole("USER")
                                 .anyRequest().permitAll())
                 .addFilterBefore(headerAuthenticationFilter(), AuthorizationFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
