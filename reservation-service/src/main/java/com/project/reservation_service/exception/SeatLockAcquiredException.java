@@ -1,4 +1,4 @@
-package com.project.movie_reservation_system.exception;
+package com.project.reservation_service.exception;
 
 import org.springframework.http.HttpStatus;
 

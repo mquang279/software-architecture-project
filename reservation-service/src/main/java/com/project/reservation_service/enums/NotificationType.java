@@ -1,8 +1,6 @@
-package com.project.movie_reservation_system.enums;
+package com.project.reservation_service.enums;
 
 public enum NotificationType {
-    LIKE,
-    COMMENT,
-    FOLLOW,
+    RESERVATION,
     SYSTEM
 }
