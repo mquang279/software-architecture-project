@@ -2,9 +2,9 @@ package com.project.movie_reservation_system.service.impl;
 
 import com.project.movie_reservation_system.entity.Seat;
 import com.project.movie_reservation_system.enums.SeatStatus;
-import com.project.movie_reservation_system.exception.CustomException;
 import com.project.movie_reservation_system.exception.SeatAlreadyBookedException;
 import com.project.movie_reservation_system.exception.SeatLockAcquiredException;
+import com.project.movie_reservation_system.exception.SeatNotFoundException;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatLockManager;
 import com.project.movie_reservation_system.service.SeatService;
@@ -30,22 +30,21 @@ public class SeatServiceImpl implements SeatService {
         this.seatLockManager = seatLockManager;
     }
 
-    public List<Seat> createSeatsWithGivenPrice(int seats, double price, String area){
-        return IntStream.range(1, seats+1)
+    public List<Seat> createSeatsWithGivenPrice(int seats, double price, String area) {
+        return IntStream.range(1, seats + 1)
                 .mapToObj(seatCount -> Seat.builder()
                         .price(price)
                         .number(seatCount)
                         .area(area)
                         .status(SeatStatus.UNBOOKED)
-                        .build()
-                )
+                        .build())
                 .map(seatRepository::save)
                 .toList();
     }
 
     public Seat getSeatById(Long seatId) {
         return seatRepository.findById(seatId)
-                .orElseThrow(() -> new CustomException("Seat Not Found", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new SeatNotFoundException(seatId));
     }
 
     /**
@@ -60,20 +59,17 @@ public class SeatServiceImpl implements SeatService {
             if (!acquired) {
 
                 releasePreviousLocks(seatIds, seatId);
-                throw new SeatLockAcquiredException(SEAT_LOCK_ACQUIRED, HttpStatus.CONFLICT);
+                throw new SeatLockAcquiredException();
             }
 
             try {
                 Seat seat = seatRepository.findById(seatId)
-                        .orElseThrow(() -> new CustomException("Seat Not Found", HttpStatus.NOT_FOUND));
+                        .orElseThrow(() -> new SeatNotFoundException(seatId));
 
                 if (seat.getStatus() != SeatStatus.UNBOOKED) {
                     releasePreviousLocks(seatIds, seatId);
                     lock.unlock();
-                    throw new SeatAlreadyBookedException(
-                            "Seat " + seatId + " is " + seat.getStatus(),
-                            HttpStatus.CONFLICT
-                    );
+                    throw new SeatAlreadyBookedException();
                 }
 
                 seat.setStatus(SeatStatus.LOCKED);
@@ -143,7 +139,7 @@ public class SeatServiceImpl implements SeatService {
         try {
             seatStatus = SeatStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new CustomException("Invalid seat status: " + status, HttpStatus.BAD_REQUEST);
+            throw new RuntimeException("Invalid seat status: " + status);
         }
 
         for (Long seatId : seatIds) {
@@ -161,10 +157,8 @@ public class SeatServiceImpl implements SeatService {
 
                 // Validate transition
                 if (seatStatus == SeatStatus.BOOKED && seat.getStatus() != SeatStatus.LOCKED) {
-                    throw new CustomException(
-                            "Cannot book seat " + seatId + " that is not locked",
-                            HttpStatus.BAD_REQUEST
-                    );
+                    throw new RuntimeException(
+                            "Cannot book seat " + seatId + " that is not locked");
                 }
 
                 seat.setStatus(seatStatus);
