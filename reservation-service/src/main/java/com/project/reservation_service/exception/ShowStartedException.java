@@ -2,9 +2,9 @@ package com.project.reservation_service.exception;
 
 import org.springframework.http.HttpStatus;
 
-public class ShowStartedException extends CustomException{
+public class ShowStartedException extends RuntimeException{
 
-    public ShowStartedException(String message, HttpStatus httpStatus) {
-        super(message, httpStatus);
+    public ShowStartedException(Long id) {
+        super("Show with id: " + id + "has started");
     }
 }

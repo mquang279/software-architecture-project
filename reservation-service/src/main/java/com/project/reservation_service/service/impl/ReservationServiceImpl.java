@@ -56,15 +56,8 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation createReservation(ReservationRequestDto reservationRequestDto, Long userId) {
         UserDto user = userServiceClient.getUserById(userId);
-        if (user == null) {
-            throw new CustomException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
 
-        // 2. Validate show exists
         ShowDto show = showServiceClient.getShowById(reservationRequestDto.getShowId());
-        if (show == null) {
-            throw new ShowNotFoundException(SHOW_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
 
         // 3. Lock seats
         List<Long> seatIds = reservationRequestDto.getSeatIdsToReserve();
@@ -77,7 +70,7 @@ public class ReservationServiceImpl implements ReservationService {
                     .sum();
 
             if (totalPrice != reservationRequestDto.getAmount()) {
-                throw new AmountNotMatchException(AMOUNT_NOT_MATCH, HttpStatus.BAD_REQUEST);
+                throw new AmountNotMatchException();
             }
 
             // 5. Mark seats as BOOKED
@@ -122,7 +115,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation getReservationById(long reservationId) {
         return reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
 
     }
 
@@ -131,12 +124,12 @@ public class ReservationServiceImpl implements ReservationService {
     public Reservation cancelReservation(long reservationId) {
 
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ReservationNotFoundException(RESERVATION_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
 
         // Check if show hasn't started
         ShowDto show = showServiceClient.getShowById(reservation.getShowId());
         if (show.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new ShowStartedException(SHOW_STARTED_EXCEPTION, HttpStatus.BAD_REQUEST);
+            throw new ShowStartedException(show.getId());
         }
 
         // Update seat status to UNBOOKED
@@ -165,10 +158,6 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public PaginationResponse<Reservation> getAllReservationsForUser(Long userId, int page, int size) {
         UserDto user = userServiceClient.getUserById(userId);
-
-        if (user == null) {
-            throw new CustomException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
-        }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Reservation> reservationPage = reservationRepository.findByUserId(userId, pageable);
