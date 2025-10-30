@@ -35,6 +35,9 @@ public class GatewayConfig {
                                 .route("notification-service", r -> r
                                         .path("/api/v1/notifications/**")
                                         .uri("lb://notification-service"))
+                                .route("payment-service", r -> r
+                                        .path("/api/v1/payments/**")
+                                        .uri("lb://payment-service"))
                                 .build();
         }
 }

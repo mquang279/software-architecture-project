@@ -23,6 +23,7 @@ import com.project.reservation_service.service.ReservationService;
 
 import static com.project.reservation_service.constant.ExceptionMessages.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -73,43 +74,115 @@ public class ReservationServiceImpl implements ReservationService {
                 throw new AmountNotMatchException();
             }
 
-            // 5. Mark seats as BOOKED
-            seatServiceClient.updateSeatStatus(seatIds, "BOOKED");
-
             // 6. Create reservation
             Reservation reservation = Reservation.builder()
                     .userId(userId)
                     .showId(reservationRequestDto.getShowId())
                     .seatsReservedIds(seatIds)
                     .amountPaid(reservationRequestDto.getAmount())
-                    .reservationStatus(ReservationStatus.BOOKED)
+                    .reservationStatus(ReservationStatus.PENDING_PAYMENT)
                     .build();
 
             reservationRepository.save(reservation);
 
-
-            String payload = String.format(
-                    "Đặt vé thành công! Mã đặt chỗ: #%d.Chiếu: %s lúc %s. Số ghế: %d. Tổng tiền: %.0f VND.",
-                    reservation.getId(),
-                    show.getMovieId(),
-                    show.getStartTime(),
-                    reservation.getSeatsReservedIds().size(),
-                    reservation.getAmountPaid()
-            );
-
-
-            NotificationRequestDto notificationRequestDto = NotificationRequestDto.builder()
-                    .userId(userId)
-                    .type(NotificationType.RESERVATION)
-                    .payload(payload)
-                    .build();
-
-            notificationServiceClient.addNotification(notificationRequestDto);
             return reservation;
-        } finally {
+        } catch (Exception e) {
             seatServiceClient.unlockSeats(seatIds);
+            throw e;
+        }
+    }
+
+
+    @Override
+    @Transactional
+    public Reservation confirmReservation(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
+
+        if (reservation.getReservationStatus() != ReservationStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("Reservation is not pending payment");
         }
 
+        try {
+            seatServiceClient.updateSeatStatus(reservation.getSeatsReservedIds(), "BOOKED");
+
+            reservation.setReservationStatus(ReservationStatus.CONFIRMED);
+            reservation = reservationRepository.save(reservation);
+
+            seatServiceClient.unlockSeats(reservation.getSeatsReservedIds());
+
+            try {
+                ShowDto show = showServiceClient.getShowById(reservation.getShowId());
+
+                String payload = String.format(
+                        "Đặt vé thành công! Mã đặt chỗ: #%d. Suất chiếu: %s lúc %s. Số ghế: %d. Tổng tiền: %.0f VND. " +
+                                "Vui lòng đến rạp trước 15 phút.",
+                        reservation.getId(),
+                        show.getMovieId(),
+                        show.getStartTime(),
+                        reservation.getSeatsReservedIds().size(),
+                        reservation.getAmountPaid()
+                );
+
+                NotificationRequestDto notificationDto = NotificationRequestDto.builder()
+                        .userId(reservation.getUserId())
+                        .type(NotificationType.RESERVATION)
+                        .payload(payload)
+                        .build();
+
+                notificationServiceClient.addNotification(notificationDto);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to send confirmation notification for reservation {}");
+                // Don't throw - notification failure shouldn't break the flow
+            }
+            return reservation;
+        } catch (Exception e) {
+            // Rollback: unlock seats và trả về PENDING_PAYMENT
+            seatServiceClient.unlockSeats(reservation.getSeatsReservedIds());
+
+            throw new RuntimeException("Failed to confirm reservation", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Reservation cancelReservationByPayment(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ReservationNotFoundException(reservationId));
+
+        try {
+            seatServiceClient.updateSeatStatus(reservation.getSeatsReservedIds(), "UNBOOKED");
+            seatServiceClient.unlockSeats(reservation.getSeatsReservedIds());
+
+            reservation.setReservationStatus(ReservationStatus.CANCELED);
+            reservation = reservationRepository.save(reservation);
+
+            try {
+                String payload = String.format(
+                        "Thanh toán thất bại! Mã đặt chỗ #%d đã bị hủy. " +
+                                "Ghế đã được giải phóng. Vui lòng thử lại.",
+                        reservation.getId()
+                );
+
+                NotificationRequestDto notificationDto = NotificationRequestDto.builder()
+                        .userId(reservation.getUserId())
+                        .type(NotificationType.RESERVATION)
+                        .payload(payload)
+                        .build();
+
+                notificationServiceClient.addNotification(notificationDto);
+
+            } catch (Exception e) {
+                System.out.println("Failed to send cancellation notification for reservation {}");
+            }
+
+            return reservation;
+
+        } catch (Exception e) {
+            seatServiceClient.unlockSeats(reservation.getSeatsReservedIds());
+            throw new RuntimeException("Failed to cancel reservation", e);
+        }
     }
 
     @Override
@@ -132,6 +205,10 @@ public class ReservationServiceImpl implements ReservationService {
             throw new ShowStartedException(show.getId());
         }
 
+        if (reservation.getReservationStatus() != ReservationStatus.PENDING_PAYMENT) {
+            throw new RuntimeException("The reservation has been cancelled");
+        }
+
         // Update seat status to UNBOOKED
         seatServiceClient.updateSeatStatus(reservation.getSeatsReservedIds(), "UNBOOKED");
 
@@ -152,7 +229,6 @@ public class ReservationServiceImpl implements ReservationService {
 
         notificationServiceClient.addNotification(notificationRequestDto);
         return reservationRepository.save(reservation);
-
     }
 
     @Override
