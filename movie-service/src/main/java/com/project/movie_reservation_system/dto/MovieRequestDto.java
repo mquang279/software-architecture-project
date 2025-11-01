@@ -14,5 +14,4 @@ public class MovieRequestDto {
     int movieLength;
     String movieLanguage;
     String releaseDate;
-
 }
