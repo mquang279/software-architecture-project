@@ -19,7 +19,7 @@ public class ReservationController {
         this.reservationService = reservationService;
     }
 
-    @GetMapping
+    @GetMapping("")
     public ResponseEntity<PaginationResponse<Reservation>> getAllReservationsForCurrentUser(
             @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
@@ -40,7 +40,7 @@ public class ReservationController {
         return null;
     }
 
-    @PostMapping
+    @PostMapping("")
     public ResponseEntity<Reservation> createReservation(
             @RequestBody ReservationRequestDto reservationRequestDto, Long userId) {
         Reservation reservation = reservationService.createReservation(reservationRequestDto, userId);
