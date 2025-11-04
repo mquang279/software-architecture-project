@@ -1,0 +1,323 @@
+services:
+  # Discovery Service
+  discovery-service:
+    build:
+      context: ./discovery_service
+      dockerfile: Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      - SECRET_TOKEN=Ffbpo4qGLCKLYfbwV4a8mgmPYgNxoa8rorhEg6dn18s=
+      - ACCESS_TOKEN_EXPIRATION=36000
+      - REFRESH_TOKEN_EXPIRATION=36000
+    ports:
+      - "8081:8081"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+
+  # Gateway Service
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    environment:
+      - SECRET_TOKEN=Ffbpo4qGLCKLYfbwV4a8mgmPYgNxoa8rorhEg6dn18s=
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      - DB_HOST=user-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8088:8088"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      user-db:
+        condition: service_started
+
+  user-db:
+    image: postgres:17-alpine
+    container_name: user-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - user-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Movie Service
+  movie-service:
+    build:
+      context: ./movie-service
+      dockerfile: Dockerfile
+    container_name: movie-service
+    environment:
+      - DB_HOST=movie-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8082:8082"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      movie-db:
+        condition: service_started
+
+  movie-db:
+    image: postgres:17-alpine
+    container_name: movie-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - movie-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    environment:
+      - DB_HOST=notification-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8090:8090"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      notification-db:
+        condition: service_started
+
+  notification-db:
+    image: postgres:17-alpine
+    container_name: notification-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5435:5432"
+    volumes:
+      - notification-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Reservation Service
+  reservation-service:
+    build:
+      context: ./reservation-service
+      dockerfile: Dockerfile
+    container_name: reservation-service
+    environment:
+      - DB_HOST=reservation-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8083:8083"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      reservation-db:
+        condition: service_started
+
+  reservation-db:
+    image: postgres:17-alpine
+    container_name: reservation-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5436:5432"
+    volumes:
+      - reservation-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Seat Service
+  seat-service:
+    build:
+      context: ./seat-service
+      dockerfile: Dockerfile
+    container_name: seat-service
+    environment:
+      - DB_HOST=seat-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8089:8089"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      seat-db:
+        condition: service_started
+
+  seat-db:
+    image: postgres:17-alpine
+    container_name: seat-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5437:5432"
+    volumes:
+      - seat-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Show Service
+  show-service:
+    build:
+      context: ./show-service
+      dockerfile: Dockerfile
+    container_name: show-service
+    environment:
+      - DB_HOST=show-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8086:8086"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      show-db:
+        condition: service_started
+
+  show-db:
+    image: postgres:17-alpine
+    container_name: show-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5438:5432"
+    volumes:
+      - show-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Theater Service
+  theater-service:
+    build:
+      context: ./theater-service
+      dockerfile: Dockerfile
+    container_name: theater-service
+    environment:
+      - DB_HOST=theater-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=root
+      - DB_PASSWORD=mypassword
+    ports:
+      - "8087:8087"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      theater-db:
+        condition: service_started
+
+  theater-db:
+    image: postgres:17-alpine
+    container_name: theater-db
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5439:5432"
+    volumes:
+      - theater-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+volumes:
+  user-data:
+  movie-data:
+  notification-data:
+  reservation-data:
+  seat-data:
+  show-data:
+  theater-data:
+
+networks:
+  app-network:
+    driver: bridge
