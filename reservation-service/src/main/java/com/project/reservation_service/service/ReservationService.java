@@ -12,4 +12,8 @@ public interface ReservationService {
     Reservation cancelReservation(long id);
 
     PaginationResponse<Reservation> getAllReservationsForUser(Long userId, int page, int pageSize);
+
+    Reservation confirmReservation(Long reservationId);
+
+    Reservation cancelReservationByPayment(Long reservationId);
 }

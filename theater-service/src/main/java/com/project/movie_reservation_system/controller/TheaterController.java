@@ -15,7 +15,6 @@ public class TheaterController {
 
     private final TheaterServiceImpl theaterService;
 
-    @Autowired
     public TheaterController(TheaterServiceImpl theaterService) {
         this.theaterService = theaterService;
     }

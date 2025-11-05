@@ -5,6 +5,64 @@ import { Rate } from "k6/metrics";
 const errorRate = new Rate("errors");
 const BASE_URL = __ENV.BASE_URL || "http://localhost:8080";
 
+function randomString(prefix) {
+    return `${prefix}_${Math.random().toString(36).substring(2, 10)}`;
+}
+
+function randomReleaseDate() {
+    const now = new Date();
+    const pastOffset = Math.floor(Math.random() * 365 * 5); // up to five years back
+    const releaseDate = new Date(now.getTime() - pastOffset * 24 * 60 * 60 * 1000);
+    return releaseDate.toISOString().split("T")[0];
+}
+
+function createMovie(params) {
+    const payload = JSON.stringify({
+        movieName: randomString("LoadTestMovie"),
+        genre: ["ACTION"],
+        movieLength: 90 + Math.floor(Math.random() * 61),
+        movieLanguage: "English",
+        releaseDate: randomReleaseDate(),
+    });
+
+    const res = http.post(`${BASE_URL}/api/v1/movies`, payload, params);
+
+    const result = check(res, {
+        "create movie - status is 201": (r) => r.status === 201,
+        "create movie - response time < 1000ms": (r) => r.timings.duration < 1000,
+    });
+
+    if (!result) {
+        errorRate.add(1);
+        return null;
+    }
+
+    const body = res.json();
+    return body && body.id ? body.id : null;
+}
+
+function createTheater(params) {
+    const payload = JSON.stringify({
+        name: randomString("LoadTestTheater"),
+        location: randomString("Location"),
+    });
+
+    const res = http.post(`${BASE_URL}/api/v1/theaters`, payload, params);
+
+    const result = check(res, {
+        "create theater - status is 201": (r) => r.status === 201,
+        "create theater - response time < 1000ms": (r) => r.timings.duration < 1000,
+    });
+
+    if (!result) {
+        errorRate.add(1);
+        return null;
+    }
+
+    const body = res.json();
+    return body && body.id ? body.id : null;
+}
+
 export const options = {
     scenarios: {
         // Write workload tests (run first)
@@ -176,22 +234,44 @@ export function readWorkload() {
 
 // Write workload - POST create show
 export function writeWorkload() {
-    const movieId = Math.floor(Math.random() * 1000) + 1;
-    const theaterId = Math.floor(Math.random() * 100) + 1;
-    const futureDate = new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000);
-
-    const payload = JSON.stringify({
-        movieId: movieId,
-        theaterId: theaterId,
-        showTime: futureDate.toISOString(),
-        price: Math.floor(Math.random() * 20) + 10,
-    });
-
     const params = {
         headers: {
             "Content-Type": "application/json",
         },
     };
+
+    const createdMovieId = createMovie(params);
+    if (!createdMovieId) {
+        sleep(0.1);
+        return;
+    }
+
+    const createdTheaterId = createTheater(params);
+    if (!createdTheaterId) {
+        sleep(0.1);
+        return;
+    }
+
+    const futureDate = new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000);
+    const showLengthMinutes = 90 + Math.floor(Math.random() * 61); // between 90 and 150 minutes
+    // Use epoch milliseconds format for Java Instant
+    const startTime = futureDate.getTime();
+    const endTime = futureDate.getTime() + showLengthMinutes * 60 * 1000;
+
+    const seatAreas = ["VIP", "PREMIUM", "STANDARD"];
+    const seats = seatAreas.map((area, index) => ({
+        seatCount: 20 + Math.floor(Math.random() * 31) + index * 5,
+        seatPrice: 10 + Math.floor(Math.random() * 11) + index * 5,
+        area: area,
+    }));
+
+    const payload = JSON.stringify({
+        movieId: createdMovieId,
+        theaterId: createdTheaterId,
+        startTime: startTime,
+        endTime: endTime,
+        seats: seats,
+    });
 
     const res = http.post(`${BASE_URL}/api/v1/shows`, payload, params);
 

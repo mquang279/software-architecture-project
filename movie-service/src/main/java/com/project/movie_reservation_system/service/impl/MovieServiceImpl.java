@@ -51,7 +51,7 @@ public class MovieServiceImpl implements MovieService {
                 .movieLength(movieRequestDto.getMovieLength())
                 .genre(movieRequestDto.getGenre().stream().map(MovieGenre::valueOf).toList())
                 .movieName(movieRequestDto.getMovieName())
-                .releaseDate(LocalDate.parse(movieRequestDto.getReleaseDate()))
+                .releaseDate(movieRequestDto.getReleaseDate())
                 .build();
 
         return movieRepository.save(movie);
@@ -63,7 +63,7 @@ public class MovieServiceImpl implements MovieService {
                     movieInDb.setMovieName(movieRequestDto.getMovieName());
                     movieInDb.setGenre(movieRequestDto.getGenre().stream().map(MovieGenre::valueOf).toList());
                     movieInDb.setMovieLanguage(movieRequestDto.getMovieLanguage());
-                    movieInDb.setReleaseDate(LocalDate.parse(movieRequestDto.getReleaseDate()));
+                    movieInDb.setReleaseDate(movieRequestDto.getReleaseDate());
                     movieInDb.setMovieLength(movieRequestDto.getMovieLength());
 
                     return movieRepository.save(movieInDb);

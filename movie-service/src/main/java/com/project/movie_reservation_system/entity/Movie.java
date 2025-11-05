@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -25,5 +26,5 @@ public class Movie {
     List<MovieGenre> genre;
     int movieLength;
     String movieLanguage;
-    LocalDate releaseDate;
+    Instant releaseDate;
 }
