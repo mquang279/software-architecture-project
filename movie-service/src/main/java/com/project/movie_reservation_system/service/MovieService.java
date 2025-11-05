@@ -1,7 +1,5 @@
 package com.project.movie_reservation_system.service;
 
-import org.springframework.data.domain.Page;
-
 import com.project.movie_reservation_system.dto.MovieRequestDto;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Movie;

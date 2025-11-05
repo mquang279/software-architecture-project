@@ -6,10 +6,8 @@ import com.project.movie_reservation_system.entity.Movie;
 import com.project.movie_reservation_system.service.MovieService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-@PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPER_ADMIN')")
 @RestController
 @RequestMapping("/api/v1/movies")
 public class MovieController {

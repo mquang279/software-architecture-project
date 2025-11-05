@@ -18,7 +18,7 @@ public class GatewayConfig {
                                                 .path("/users/**")
                                                 .uri("lb://user-service"))
                                 .route("movie-service", r -> r
-                                                .path("/movies/**")
+                                                .path("/api/v1/movies/**")
                                                 .uri("lb://movie-service"))
                                 .route("theater-service", r -> r
                                                 .path("/api/v1/theaters/**")
@@ -33,11 +33,8 @@ public class GatewayConfig {
                                                 .path("/api/v1/seats/**")
                                                 .uri("lb://seat-service"))
                                 .route("notification-service", r -> r
-                                        .path("/api/v1/notifications/**")
-                                        .uri("lb://notification-service"))
-                                .route("payment-service", r -> r
-                                        .path("/api/v1/payments/**")
-                                        .uri("lb://payment-service"))
+                                                .path("/api/v1/notifications/**")
+                                                .uri("lb://notification-service"))
                                 .build();
         }
 }
