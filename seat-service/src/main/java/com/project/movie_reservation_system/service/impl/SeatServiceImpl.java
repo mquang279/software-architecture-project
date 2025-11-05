@@ -1,5 +1,6 @@
 package com.project.movie_reservation_system.service.impl;
 
+import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Seat;
 import com.project.movie_reservation_system.enums.SeatStatus;
 import com.project.movie_reservation_system.exception.SeatAlreadyBookedException;
@@ -9,6 +10,8 @@ import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatLockManager;
 import com.project.movie_reservation_system.service.SeatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -30,9 +33,10 @@ public class SeatServiceImpl implements SeatService {
         this.seatLockManager = seatLockManager;
     }
 
-    public List<Seat> createSeatsWithGivenPrice(int seats, double price, String area) {
+    public List<Seat> createSeatsWithGivenPrice(Long showId, int seats, double price, String area) {
         return IntStream.range(1, seats + 1)
                 .mapToObj(seatCount -> Seat.builder()
+                        .showId(showId)
                         .price(price)
                         .number(seatCount)
                         .area(area)
@@ -45,6 +49,17 @@ public class SeatServiceImpl implements SeatService {
     public Seat getSeatById(Long seatId) {
         return seatRepository.findById(seatId)
                 .orElseThrow(() -> new SeatNotFoundException(seatId));
+    }
+
+    public PaginationResponse<Seat> getSeatsByShowId(Long showId,  int size, int page) {
+        Page<Seat> seats = seatRepository.findByShowId(showId, PageRequest.of(page, size));
+        return PaginationResponse.<Seat>builder()
+                .pageNumber(page)
+                .pageSize(size)
+                .totalPages(seats.getTotalPages())
+                .totalElements(seats.getTotalElements())
+                .data(seats.getContent())
+                .build();
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.project.movie_reservation_system.controller;
 
+import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Seat;
 import com.project.movie_reservation_system.service.impl.SeatServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,15 @@ public class SeatController {
         return ResponseEntity.ok(seat);
     }
 
+    @GetMapping("")
+    public ResponseEntity<PaginationResponse<Seat>> getSeatsByShowId(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam Long showId
+    ) {
+        return ResponseEntity.ok(seatService.getSeatsByShowId(showId, size, page));
+    }
+
     @PostMapping("/lock")
     public void lockSeats(@RequestBody List<Long> seatIds) {
         seatService.lockSeats(seatIds);
@@ -49,9 +59,10 @@ public class SeatController {
     public ResponseEntity<List<Seat>> createSeatsWithGivenPrice(
             @RequestParam int seats,
             @RequestParam double price,
-            @RequestParam String area) {
+            @RequestParam String area,
+            @RequestParam Long showId) {
 
-        List<Seat> createdSeats = seatService.createSeatsWithGivenPrice(seats, price, area);
+        List<Seat> createdSeats = seatService.createSeatsWithGivenPrice(showId, seats, price, area);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSeats);
     }

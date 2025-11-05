@@ -21,6 +21,7 @@ public class Seat {
     @Enumerated(value = EnumType.STRING)
     private SeatStatus status;
 
+    private Long showId;
     private double price;
     private int number;
     private String area;

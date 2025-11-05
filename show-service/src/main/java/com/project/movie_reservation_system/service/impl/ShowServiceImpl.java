@@ -39,28 +39,23 @@ public class ShowServiceImpl implements ShowService {
     public Show createNewShow(ShowRequestDto showRequestDto) {
         MovieDto movie = movieServiceClient.getMovieById(showRequestDto.getMovieId());
         TheaterDto theater = theaterServiceClient.getTheaterById(showRequestDto.getTheaterId());
+
+        Show show = showRepository.save(Show.builder()
+                .movieId(showRequestDto.getMovieId())
+                .theaterId(showRequestDto.getTheaterId())
+                .startTime(showRequestDto.getStartTime())
+                .endTime(showRequestDto.getEndTime())
+                .build());
+
         List<SeatDto> seats = new ArrayList<>();
         showRequestDto.getSeats()
                 .forEach(seatStructure -> seats.addAll(
                         seatServiceClient.createSeatsWithGivenPrice(
                                 seatStructure.getSeatCount(),
                                 seatStructure.getSeatPrice(),
-                                seatStructure.getArea())));
-
-        List<Long> seatIds = new ArrayList<>();
-        for (SeatDto seat : seats) {
-            seatIds.add(seat.getId());
-        }
-
-        Show show = Show.builder()
-                .movieId(showRequestDto.getMovieId())
-                .theaterId(showRequestDto.getTheaterId())
-                .seatsIds(seatIds)
-                .startTime(showRequestDto.getStartTime())
-                .endTime(showRequestDto.getEndTime())
-                .build();
-
-        return showRepository.save(show);
+                                seatStructure.getArea(),
+                                show.getId())));
+        return show;
     }
 
     public PaginationResponse<Show> getllShows(int page, int size) {
