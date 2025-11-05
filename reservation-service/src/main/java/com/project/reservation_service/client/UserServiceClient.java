@@ -8,6 +8,6 @@ import com.project.reservation_service.dto.UserDto;
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
-    @GetMapping("/api/users/{userId}")
+    @GetMapping("/api/v1/users/{userId}")
     UserDto getUserById(@PathVariable Long userId);
 }
