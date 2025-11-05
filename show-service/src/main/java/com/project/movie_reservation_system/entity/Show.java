@@ -23,9 +23,4 @@ public class Show {
     Long theaterId;
     Instant startTime;
     Instant endTime;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "show_seats", joinColumns = @JoinColumn(name = "show_id"))
-    @Column(name = "seat_id")
-    List<Long> seatsIds;
 }

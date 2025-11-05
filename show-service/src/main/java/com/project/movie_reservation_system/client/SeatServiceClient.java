@@ -15,6 +15,7 @@ public interface SeatServiceClient {
     public List<SeatDto> createSeatsWithGivenPrice(
             @RequestParam int seats,
             @RequestParam double price,
-            @RequestParam String area
+            @RequestParam String area,
+            @RequestParam Long showId
     );
 }
