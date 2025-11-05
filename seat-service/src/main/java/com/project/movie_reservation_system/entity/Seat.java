@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 @Data
 @Builder
 @AllArgsConstructor
@@ -27,5 +25,4 @@ public class Seat {
     private double price;
     private int number;
     private String area;
-
 }

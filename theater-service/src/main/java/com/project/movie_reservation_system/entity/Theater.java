@@ -19,5 +19,4 @@ public class Theater {
     long id;
     String name;
     String location;
-
 }

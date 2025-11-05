@@ -43,8 +43,8 @@ public class ShowServiceImpl implements ShowService {
         Show show = showRepository.save(Show.builder()
                 .movieId(showRequestDto.getMovieId())
                 .theaterId(showRequestDto.getTheaterId())
-                .startTime(Instant.parse(showRequestDto.getStartTime()))
-                .endTime(Instant.parse(showRequestDto.getEndTime()))
+                .startTime(showRequestDto.getStartTime())
+                .endTime(showRequestDto.getEndTime())
                 .build());
 
         List<SeatDto> seats = new ArrayList<>();
