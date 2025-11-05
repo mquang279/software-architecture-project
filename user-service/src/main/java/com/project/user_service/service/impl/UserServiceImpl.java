@@ -1,7 +1,12 @@
 package com.project.user_service.service.impl;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.project.user_service.dto.entity.UserDTO;
@@ -15,15 +20,14 @@ import com.project.user_service.exception.UserNotFoundException;
 import com.project.user_service.repository.UserRepository;
 import com.project.user_service.service.UserService;
 
-import java.util.List;
-import java.util.Optional;
-
 @Service
 public class UserServiceImpl implements UserService {
         private final UserRepository userRepository;
+        private final RedisTemplate<String, Object> redisTemplate;
 
-        public UserServiceImpl(UserRepository userRepository) {
+        public UserServiceImpl(UserRepository userRepository, RedisTemplate<String, Object> redisTemplate) {
                 this.userRepository = userRepository;
+                this.redisTemplate = redisTemplate;
         }
 
         public PaginationResponse<UserDTO> getAllUser(int page, int pageSize) {
@@ -51,15 +55,33 @@ public class UserServiceImpl implements UserService {
                                 .lastName(request.getLastName())
                                 .username(request.getUsername())
                                 .email(request.getEmail()).build();
-                this.userRepository.save(user);
-                return this.convertToDTO(user);
+                User saved = this.userRepository.save(user);
+                UserDTO dto = this.convertToDTO(saved);
+
+                String idKey = userKey(dto.getId());
+                String emailKey = userEmailKey(dto.getEmail());
+                redisTemplate.opsForValue().set(idKey, dto);
+                redisTemplate.opsForValue().set(emailKey, dto);
+                return dto;
         }
 
         @Override
         public UserDTO getUserById(Long id) {
+                String key = userKey(id);
+                Object cached = redisTemplate.opsForValue().get(key);
+                if (cached instanceof UserDTO) {
+                        return (UserDTO) cached;
+                }
+
                 Optional<User> userOptional = this.userRepository.findById(id);
                 if (userOptional.isPresent()) {
-                        return this.convertToDTO(userOptional.get());
+                        UserDTO dto = this.convertToDTO(userOptional.get());
+                        redisTemplate.opsForValue().set(key, dto);
+                        if (dto.getEmail() != null) {
+                                String emailKey = userEmailKey(dto.getEmail());
+                                redisTemplate.opsForValue().set(emailKey, dto);
+                        }
+                        return dto;
                 } else {
                         throw new UserNotFoundException(id);
                 }
@@ -85,8 +107,15 @@ public class UserServiceImpl implements UserService {
                         user.setUsername(request.getUsername());
                 }
 
-                this.userRepository.save(user);
-                return this.convertToDTO(user);
+                User saved = this.userRepository.save(user);
+                UserDTO dto = this.convertToDTO(saved);
+                String idKey = userKey(id);
+                redisTemplate.opsForValue().set(idKey, dto);
+                if (dto.getEmail() != null) {
+                        String emailKey = userEmailKey(dto.getEmail());
+                        redisTemplate.opsForValue().set(emailKey, dto);
+                }
+                return dto;
         }
 
         @Override
@@ -96,6 +125,11 @@ public class UserServiceImpl implements UserService {
                         throw new UserNotFoundException(id);
                 }
                 this.userRepository.delete(user);
+                String idKey = userKey(id);
+                redisTemplate.delete(idKey);
+                if (user.getEmail() != null) {
+                        redisTemplate.delete(userEmailKey(user.getEmail()));
+                }
         }
 
         @Override
@@ -113,9 +147,21 @@ public class UserServiceImpl implements UserService {
 
         @Override
         public UserDTO getUserByEmail(String email) {
+                String key = userEmailKey(email);
+                Object cached = redisTemplate.opsForValue().get(key);
+                if (cached instanceof UserDTO) {
+                        return (UserDTO) cached;
+                }
+
                 Optional<User> user = this.userRepository.findByEmail(email);
                 if (user.isPresent()) {
-                        return this.convertToDTO(user.get());
+                        UserDTO dto = this.convertToDTO(user.get());
+                        redisTemplate.opsForValue().set(key, dto);
+                        if (dto.getId() != null) {
+                                String idKey = userKey(dto.getId());
+                                redisTemplate.opsForValue().set(idKey, dto);
+                        }
+                        return dto;
                 } else {
                         throw new UserNotFoundException("User with this email is not existed");
                 }
@@ -133,7 +179,12 @@ public class UserServiceImpl implements UserService {
                                 .passwordHash(request.getPassword())
                                 .build();
                 this.userRepository.save(user);
-                return this.convertToDTO(user);
+                UserDTO dto = this.convertToDTO(user);
+                String idKey = userKey(user.getId());
+                String emailKey = userEmailKey(user.getEmail());
+                redisTemplate.opsForValue().set(idKey, dto);
+                redisTemplate.opsForValue().set(emailKey, dto);
+                return dto;
         }
 
         @Override
@@ -152,5 +203,20 @@ public class UserServiceImpl implements UserService {
                                 .orElseThrow(() -> new UserNotFoundException(id));
                 user.setRefreshToken(refreshToken);
                 this.userRepository.save(user);
+                String idKey = userKey(id);
+                Object cached = redisTemplate.opsForValue().get(idKey);
+                if (cached instanceof UserDTO) {
+                        UserDTO dto = (UserDTO) cached;
+                        dto.setPasswordHash(user.getPasswordHash());
+                        redisTemplate.opsForValue().set(idKey, dto);
+                }
+        }
+
+        private String userKey(Long id) {
+                return "user:" + id;
+        }
+
+        private String userEmailKey(String email) {
+                return "user:email:" + email.toLowerCase();
         }
 }
