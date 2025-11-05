@@ -22,10 +22,8 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile
     container_name: auth-service
-    environment:
-      - SECRET_TOKEN=Ffbpo4qGLCKLYfbwV4a8mgmPYgNxoa8rorhEg6dn18s=
-      - ACCESS_TOKEN_EXPIRATION=36000
-      - REFRESH_TOKEN_EXPIRATION=36000
+    env_file:
+      - ./env/auth-service.env
     ports:
       - "8081:8081"
     networks:
@@ -40,8 +38,8 @@ services:
       context: ./gateway-service
       dockerfile: Dockerfile
     container_name: gateway-service
-    environment:
-      - SECRET_TOKEN=Ffbpo4qGLCKLYfbwV4a8mgmPYgNxoa8rorhEg6dn18s=
+    env_file:
+      - ./env/gateway-service.env
     ports:
       - "8080:8080"
     networks:
@@ -56,12 +54,8 @@ services:
       context: ./user-service
       dockerfile: Dockerfile
     container_name: user-service
-    environment:
-      - DB_HOST=user-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/user-service.env
     ports:
       - "8088:8088"
     networks:
@@ -76,10 +70,8 @@ services:
     image: postgres:17-alpine
     container_name: user-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/user-db.env
     ports:
       - "5433:5432"
     volumes:
@@ -93,12 +85,8 @@ services:
       context: ./movie-service
       dockerfile: Dockerfile
     container_name: movie-service
-    environment:
-      - DB_HOST=movie-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/movie-service.env
     ports:
       - "8082:8082"
     networks:
@@ -113,10 +101,8 @@ services:
     image: postgres:17-alpine
     container_name: movie-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/movie-db.env
     ports:
       - "5432:5432"
     volumes:
@@ -130,12 +116,8 @@ services:
       context: ./notification-service
       dockerfile: Dockerfile
     container_name: notification-service
-    environment:
-      - DB_HOST=notification-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/notification-service.env
     ports:
       - "8090:8090"
     networks:
@@ -150,10 +132,8 @@ services:
     image: postgres:17-alpine
     container_name: notification-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/notification-db.env
     ports:
       - "5435:5432"
     volumes:
@@ -167,12 +147,8 @@ services:
       context: ./reservation-service
       dockerfile: Dockerfile
     container_name: reservation-service
-    environment:
-      - DB_HOST=reservation-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/reservation-service.env
     ports:
       - "8083:8083"
     networks:
@@ -187,10 +163,8 @@ services:
     image: postgres:17-alpine
     container_name: reservation-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/reservation-db.env
     ports:
       - "5436:5432"
     volumes:
@@ -204,12 +178,8 @@ services:
       context: ./seat-service
       dockerfile: Dockerfile
     container_name: seat-service
-    environment:
-      - DB_HOST=seat-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/seat-service.env
     ports:
       - "8089:8089"
     networks:
@@ -224,10 +194,8 @@ services:
     image: postgres:17-alpine
     container_name: seat-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/seat-db.env
     ports:
       - "5437:5432"
     volumes:
@@ -241,12 +209,8 @@ services:
       context: ./show-service
       dockerfile: Dockerfile
     container_name: show-service
-    environment:
-      - DB_HOST=show-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/show-service.env
     ports:
       - "8086:8086"
     networks:
@@ -261,10 +225,8 @@ services:
     image: postgres:17-alpine
     container_name: show-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/show-db.env
     ports:
       - "5438:5432"
     volumes:
@@ -278,12 +240,8 @@ services:
       context: ./theater-service
       dockerfile: Dockerfile
     container_name: theater-service
-    environment:
-      - DB_HOST=theater-db
-      - DB_PORT=5432
-      - DB_NAME=postgres
-      - DB_USERNAME=root
-      - DB_PASSWORD=mypassword
+    env_file:
+      - ./env/theater-service.env
     ports:
       - "8087:8087"
     networks:
@@ -298,10 +256,8 @@ services:
     image: postgres:17-alpine
     container_name: theater-db
     restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - ./env/theater-db.env
     ports:
       - "5439:5432"
     volumes:
