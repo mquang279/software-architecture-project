@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.project.auth_service.dto.entity.UserDTO;
 import com.project.auth_service.dto.request.RegistrationRequest;
 
-@FeignClient(name = "user-service", path = "/users")
+@FeignClient(name = "user-service", path = "/api/v1/users")
 public interface UserService {
 
     @GetMapping("/email")
