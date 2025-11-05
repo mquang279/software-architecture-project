@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/seats" )
+@RequestMapping("/api/v1/seats")
 public class SeatController {
 
     private final SeatServiceImpl seatService;
@@ -41,7 +41,6 @@ public class SeatController {
     public ResponseEntity<Void> updateSeatStatus(
             @RequestBody List<Long> seatIds,
             @RequestParam String status) {
-
         seatService.updateSeatStatus(seatIds, status);
         return ResponseEntity.ok().build();
     }
@@ -53,7 +52,6 @@ public class SeatController {
             @RequestParam String area) {
 
         List<Seat> createdSeats = seatService.createSeatsWithGivenPrice(seats, price, area);
-
 
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSeats);
     }

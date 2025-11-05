@@ -56,8 +56,8 @@ public class ShowServiceImpl implements ShowService {
                 .movieId(showRequestDto.getMovieId())
                 .theaterId(showRequestDto.getTheaterId())
                 .seatsIds(seatIds)
-                .startTime(Instant.parse(showRequestDto.getStartTime()))
-                .endTime(Instant.parse(showRequestDto.getEndTime()))
+                .startTime(showRequestDto.getStartTime())
+                .endTime(showRequestDto.getEndTime())
                 .build();
 
         return showRepository.save(show);

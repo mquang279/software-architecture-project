@@ -9,5 +9,4 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface MovieServiceClient {
     @GetMapping("/api/v1/movies/{id}")
     public MovieDto getMovieById(@PathVariable Long id);
-
 }

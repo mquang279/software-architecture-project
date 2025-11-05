@@ -17,7 +17,6 @@ public class TheaterController {
 
     private final TheaterServiceImpl theaterService;
 
-    @Autowired
     public TheaterController(TheaterServiceImpl theaterService) {
         this.theaterService = theaterService;
     }
@@ -25,31 +24,19 @@ public class TheaterController {
     @GetMapping("")
     public ResponseEntity<PaginationResponse<Theater>> getAllTheaters(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         PaginationResponse<Theater> response = theaterService.getAllTheaters(page, size);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{location}")
-    public ResponseEntity<PaginationResponse<Theater>> getAllTheatersByLocation(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @PathVariable String location
-    ){
-        PaginationResponse<Theater> response = theaterService.getAllTheatersByLocation(page, size, location);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/{theaterId}")
-    public ResponseEntity<Theater> getTheaterById(@PathVariable long theaterId){
+    public ResponseEntity<Theater> getTheaterById(@PathVariable long theaterId) {
         Theater theater = theaterService.getTheaterById(theaterId);
         return ResponseEntity.ok(theater);
     }
 
-
     @PostMapping("")
-    public ResponseEntity<Theater> createTheater(@RequestBody TheaterRequestDto theaterRequestDto){
+    public ResponseEntity<Theater> createTheater(@RequestBody TheaterRequestDto theaterRequestDto) {
         Theater theater = theaterService.createNewTheater(theaterRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -58,19 +45,18 @@ public class TheaterController {
     }
 
     @PutMapping("{theaterId}")
-    public ResponseEntity<Theater> updateTheaterById(@PathVariable long theaterId, @RequestBody TheaterRequestDto theaterRequestDto){
+    public ResponseEntity<Theater> updateTheaterById(@PathVariable long theaterId,
+            @RequestBody TheaterRequestDto theaterRequestDto) {
         Theater updatedTheater = theaterService.updateTheaterById(theaterId, theaterRequestDto);
         return ResponseEntity.ok(updatedTheater);
     }
 
-
     @DeleteMapping("{theaterId}")
-    public ResponseEntity<?> deleteTheaterById(@PathVariable long theaterId){
+    public ResponseEntity<?> deleteTheaterById(@PathVariable long theaterId) {
         theaterService.deleteTheaterById(theaterId);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
-
 
 }
