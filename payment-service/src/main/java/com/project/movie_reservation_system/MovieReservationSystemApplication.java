@@ -1,15 +1,17 @@
-package com.project.reservation_service;
+package com.project.movie_reservation_system;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.cloud.openfeign.FeignClient;
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.project.reservation_service.client")
 @EnableDiscoveryClient
-public class ReservationServiceApplication {
+@EnableFeignClients(basePackages = "com.project.movie_reservation_system.client")
+public class MovieReservationSystemApplication {
 	public static void main(String[] args) {
-		SpringApplication.run(ReservationServiceApplication.class, args);
+		SpringApplication.run(MovieReservationSystemApplication.class, args);
 	}
+
 }

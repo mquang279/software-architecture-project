@@ -50,6 +50,17 @@ public class ReservationController {
                 .body(reservation);
     }
 
+    @PostMapping("/api/v1/reservations/{reservationId}/confirm")
+    public void confirmReservation(@PathVariable Long reservationId) {
+        reservationService.confirmReservation(reservationId);
+    }
+
+
+    @PostMapping("/api/v1/reservations/{reservationId}/cancel-by-payment")
+    public void cancelReservationByPayment(@PathVariable Long reservationId) {
+        reservationService.cancelReservationByPayment(reservationId);
+    }
+
     @GetMapping("/{reservationId}")
     public ResponseEntity<Reservation> getReservationById(@PathVariable long reservationId) {
         Reservation reservation = reservationService.getReservationById(reservationId);
@@ -61,5 +72,7 @@ public class ReservationController {
         Reservation reservation = reservationService.cancelReservation(reservationId);
         return ResponseEntity.ok(reservation);
     }
+
+
 
 }

@@ -1,6 +1,7 @@
 package com.project.reservation_service.enums;
 
 public enum ReservationStatus {
-    BOOKED,
-    CANCELED
+    CANCELED,
+    PENDING_PAYMENT,
+    CONFIRMED,
 }
