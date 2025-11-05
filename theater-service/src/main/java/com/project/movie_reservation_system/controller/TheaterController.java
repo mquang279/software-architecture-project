@@ -31,11 +31,11 @@ public class TheaterController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{location}")
+    @GetMapping("/locations")
     public ResponseEntity<PaginationResponse<Theater>> getAllTheatersByLocation(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @PathVariable String location
+            @RequestParam String location
     ){
         PaginationResponse<Theater> response = theaterService.getAllTheatersByLocation(page, size, location);
         return ResponseEntity.ok(response);
