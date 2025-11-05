@@ -174,7 +174,7 @@ export function writeWorkload() {
         genre: [genres[Math.floor(Math.random() * genres.length)]],
         movieLength: Math.floor(Math.random() * 120) + 60,
         movieLanguage: languages[Math.floor(Math.random() * languages.length)],
-        releaseDate: new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        releaseDate: new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
     const params = {
