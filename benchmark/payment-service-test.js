@@ -5,64 +5,6 @@ import { Rate } from "k6/metrics";
 const errorRate = new Rate("errors");
 const BASE_URL = __ENV.BASE_URL || "http://localhost:8080";
 
-function randomString(prefix) {
-    return `${prefix}_${Math.random().toString(36).substring(2, 10)}`;
-}
-
-function randomReleaseDate() {
-    const now = new Date();
-    const pastOffset = Math.floor(Math.random() * 365 * 5); // up to five years back
-    const releaseDate = new Date(now.getTime() - pastOffset * 24 * 60 * 60 * 1000);
-    return releaseDate.toISOString().split("T")[0];
-}
-
-function createMovie(params) {
-    const payload = JSON.stringify({
-        movieName: randomString("LoadTestMovie"),
-        genre: ["ACTION"],
-        movieLength: 90 + Math.floor(Math.random() * 61),
-        movieLanguage: "English",
-        releaseDate: randomReleaseDate(),
-    });
-
-    const res = http.post(`${BASE_URL}/api/v1/movies`, payload, params);
-
-    const result = check(res, {
-        "create movie - status is 201": (r) => r.status === 201,
-        "create movie - response time < 1000ms": (r) => r.timings.duration < 1000,
-    });
-
-    if (!result) {
-        errorRate.add(1);
-        return null;
-    }
-
-    const body = res.json();
-    return body && body.id ? body.id : null;
-}
-
-function createTheater(params) {
-    const payload = JSON.stringify({
-        name: randomString("LoadTestTheater"),
-        location: randomString("Location"),
-    });
-
-    const res = http.post(`${BASE_URL}/api/v1/theaters`, payload, params);
-
-    const result = check(res, {
-        "create theater - status is 201": (r) => r.status === 201,
-        "create theater - response time < 1000ms": (r) => r.timings.duration < 1000,
-    });
-
-    if (!result) {
-        errorRate.add(1);
-        return null;
-    }
-
-    const body = res.json();
-    return body && body.id ? body.id : null;
-}
-
 export const options = {
     scenarios: {
         // Write workload tests (run first)
@@ -121,6 +63,7 @@ export const options = {
             startTime: "160s",
             tags: { test_type: "write", rps: "100k", users: "5000" },
         },
+
         // Read workload tests (run after writes)
         read_10k_rps_100_users: {
             executor: "constant-arrival-rate",
@@ -185,41 +128,39 @@ export const options = {
     },
 };
 
-// Read workload - GET show operations
+// Read workload - GET payment operations
 export function readWorkload() {
     const operation = Math.floor(Math.random() * 3);
     let res;
 
     if (operation === 0) {
-        // Get all shows with pagination
-        const page = Math.floor(Math.random() * 10);
-        const size = 10;
-        res = http.get(`${BASE_URL}/api/v1/shows?page=${page}&size=${size}`);
+        // Get payment by ID
+        const paymentId = Math.floor(Math.random() * 10000) + 1;
+        res = http.get(`${BASE_URL}/api/v1/payments/${paymentId}`);
 
         check(res, {
-            "get all shows - status is 200": (r) => r.status === 200,
-            "get all shows - response time < 500ms": (r) => r.timings.duration < 500,
+            "get payment by id - status is 200 or 404": (r) => r.status === 200 || r.status === 404,
+            "get payment by id - response time < 500ms": (r) => r.timings.duration < 500,
         });
     } else if (operation === 1) {
-        // Get show by ID
-        const showId = Math.floor(Math.random() * 1000) + 1;
-        res = http.get(`${BASE_URL}/api/v1/shows/${showId}`);
+        // Get payment by reservation ID
+        const reservationId = Math.floor(Math.random() * 10000) + 1;
+        res = http.get(`${BASE_URL}/api/v1/payments/reservation/${reservationId}`);
 
         check(res, {
-            "get show by id - status is 200 or 404": (r) => r.status === 200 || r.status === 404,
-            "get show by id - response time < 500ms": (r) => r.timings.duration < 500,
+            "get payment by reservation - status is 200 or 404": (r) => r.status === 200 || r.status === 404,
+            "get payment by reservation - response time < 500ms": (r) => r.timings.duration < 500,
         });
     } else {
-        // Filter shows by theater and/or movie
-        const theaterId = Math.floor(Math.random() * 100) + 1;
-        const movieId = Math.floor(Math.random() * 1000) + 1;
+        // Get payments by user with pagination
+        const userId = Math.floor(Math.random() * 5000) + 1;
         const page = Math.floor(Math.random() * 10);
         const size = 10;
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?theaterId=${theaterId}&movieId=${movieId}&page=${page}&size=${size}`);
+        res = http.get(`${BASE_URL}/api/v1/payments?userId=${userId}&page=${page}&size=${size}`);
 
         check(res, {
-            "filter shows - status is 200": (r) => r.status === 200,
-            "filter shows - response time < 500ms": (r) => r.timings.duration < 500,
+            "get payments by user - status is 200": (r) => r.status === 200,
+            "get payments by user - response time < 500ms": (r) => r.timings.duration < 500,
         });
     }
 
@@ -232,53 +173,30 @@ export function readWorkload() {
     sleep(0.1);
 }
 
-// Write workload - POST create show
+// Write workload - POST process payment
 export function writeWorkload() {
+    const paymentMethods = ["CREDIT_CARD", "DEBIT_CARD", "E_WALLET", "CASH"];
+    const userId = Math.floor(Math.random() * 5000) + 1;
+    const reservationId = Math.floor(Math.random() * 10000) + 1;
+    const amount = Number((Math.random() * 90 + 10).toFixed(2));
+
+    const payload = JSON.stringify({
+        reservationId: reservationId,
+        amount: amount,
+        paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+    });
+
     const params = {
         headers: {
             "Content-Type": "application/json",
         },
     };
 
-    const createdMovieId = createMovie(params);
-    if (!createdMovieId) {
-        sleep(0.1);
-        return;
-    }
-
-    const createdTheaterId = createTheater(params);
-    if (!createdTheaterId) {
-        sleep(0.1);
-        return;
-    }
-
-    const futureDate = new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000);
-    const showLengthMinutes = 90 + Math.floor(Math.random() * 61); // between 90 and 150 minutes
-    // Use epoch milliseconds format for Java Instant
-    const startTime = futureDate.getTime();
-    const endTime = futureDate.getTime() + showLengthMinutes * 60 * 1000;
-
-    const seatAreas = ["VIP", "PREMIUM", "STANDARD"];
-    const seats = seatAreas.map((area, index) => ({
-        seatCount: 20 + Math.floor(Math.random() * 31) + index * 5,
-        seatPrice: 10 + Math.floor(Math.random() * 11) + index * 5,
-        area: area,
-    }));
-
-    const payload = JSON.stringify({
-        movieId: createdMovieId,
-        theaterId: createdTheaterId,
-        startTime: startTime,
-        endTime: endTime,
-        seats: seats,
-    });
-
-    const res = http.post(`${BASE_URL}/api/v1/shows`, payload, params);
+    const res = http.post(`${BASE_URL}/api/v1/payments?userId=${userId}`, payload, params);
 
     const result = check(res, {
-        "create show - status is 201 or 200 or 400": (r) =>
-            r.status === 201 || r.status === 200 || r.status === 400,
-        "create show - response time < 1000ms": (r) => r.timings.duration < 1000,
+        "process payment - status is 200 or 400": (r) => r.status === 200 || r.status === 400,
+        "process payment - response time < 1000ms": (r) => r.timings.duration < 1000,
     });
 
     errorRate.add(!result);

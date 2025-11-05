@@ -3,6 +3,7 @@ package com.project.movie_reservation_system.dto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -13,5 +14,5 @@ public class MovieRequestDto {
     List<String> genre;
     int movieLength;
     String movieLanguage;
-    String releaseDate;
+    Instant releaseDate;
 }
