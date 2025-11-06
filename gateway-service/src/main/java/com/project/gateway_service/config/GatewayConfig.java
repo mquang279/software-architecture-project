@@ -101,12 +101,12 @@ public class GatewayConfig {
     @Bean
     @Primary
     public RedisRateLimiter redisRateLimiter() {
-        return new RedisRateLimiter(100, 100); // 100 requests per second
+        return new RedisRateLimiter(200, 500); // 200 requests per second, burst 500
     }
 
     @Bean
     public RedisRateLimiter strictRedisRateLimiter() {
-        return new RedisRateLimiter(5, 5); // 5 requests per second
+        return new RedisRateLimiter(10, 20); // 10 requests per second, burst 20
     }
 
     @Bean
