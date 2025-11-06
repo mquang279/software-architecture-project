@@ -157,10 +157,8 @@ public class UserServiceImpl implements UserService {
                 if (user.isPresent()) {
                         UserDTO dto = this.convertToDTO(user.get());
                         redisTemplate.opsForValue().set(key, dto);
-                        if (dto.getId() != null) {
-                                String idKey = userKey(dto.getId());
-                                redisTemplate.opsForValue().set(idKey, dto);
-                        }
+                        String idKey = userKey(dto.getId());
+                        redisTemplate.opsForValue().set(idKey, dto);
                         return dto;
                 } else {
                         throw new UserNotFoundException("User with this email is not existed");
