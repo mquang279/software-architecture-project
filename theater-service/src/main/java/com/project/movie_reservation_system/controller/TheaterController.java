@@ -27,7 +27,7 @@ public class TheaterController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("")
+    @GetMapping("/search")
     public ResponseEntity<PaginationResponse<Theater>> getAllTheatersByLocation(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
