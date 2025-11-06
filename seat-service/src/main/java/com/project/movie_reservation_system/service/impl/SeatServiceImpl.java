@@ -9,25 +9,19 @@ import com.project.movie_reservation_system.exception.SeatNotFoundException;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatLockManager;
 import com.project.movie_reservation_system.service.SeatService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
-import static com.project.movie_reservation_system.constant.ExceptionMessages.SEAT_ALREADY_BOOKED;
-import static com.project.movie_reservation_system.constant.ExceptionMessages.SEAT_LOCK_ACQUIRED;
-
 @Service
 public class SeatServiceImpl implements SeatService {
     private final SeatRepository seatRepository;
     private final SeatLockManager seatLockManager;
 
-    @Autowired
     public SeatServiceImpl(SeatRepository seatRepository, SeatLockManager seatLockManager) {
         this.seatRepository = seatRepository;
         this.seatLockManager = seatLockManager;
@@ -51,7 +45,7 @@ public class SeatServiceImpl implements SeatService {
                 .orElseThrow(() -> new SeatNotFoundException(seatId));
     }
 
-    public PaginationResponse<Seat> getSeatsByShowId(Long showId,  int size, int page) {
+    public PaginationResponse<Seat> getSeatsByShowId(Long showId, int size, int page) {
         Page<Seat> seats = seatRepository.findByShowId(showId, PageRequest.of(page, size));
         return PaginationResponse.<Seat>builder()
                 .pageNumber(page)
