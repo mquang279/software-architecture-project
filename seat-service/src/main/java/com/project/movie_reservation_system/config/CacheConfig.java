@@ -1,4 +1,3 @@
-package com.project.user_service.config;
 
 import java.time.Duration;
 
