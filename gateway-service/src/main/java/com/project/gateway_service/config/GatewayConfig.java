@@ -25,7 +25,7 @@ public class GatewayConfig {
                                 
                                 // User Service - Standard rate limit
                                 .route("user-service", r -> r
-                                                .path("/users/**")
+                                                .path("/api/v1/users/**")
                                                 .filters(f -> f
                                                         .requestRateLimiter(c -> c
                                                                 .setRateLimiter(redisRateLimiter())

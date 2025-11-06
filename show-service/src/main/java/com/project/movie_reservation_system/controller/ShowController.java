@@ -22,7 +22,7 @@ public class ShowController {
     public ResponseEntity<PaginationResponse<Show>> getAllShows(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PaginationResponse<Show> response = showService.getllShows(page, size);
+        PaginationResponse<Show> response = showService.getAllShows(page, size);
         return ResponseEntity.ok(response);
     }
 

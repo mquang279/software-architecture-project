@@ -17,13 +17,13 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Service configurations (name:port)
 declare -A SERVICES=(
-  ["user-service"]="8080"
+  # ["user-service"]="8080"
   ["movie-service"]="8080"
-  ["notification-service"]="8080"
-  ["reservation-service"]="8080"
-  ["seat-service"]="8080"
-  ["show-service"]="8080"
-  ["theater-service"]="8080"
+  # ["notification-service"]="8080"
+  # ["reservation-service"]="8080"
+  # ["seat-service"]="8080"
+  # ["show-service"]="8080"
+  # ["theater-service"]="8080"
 )
 
 # Create results directory if it doesn't exist

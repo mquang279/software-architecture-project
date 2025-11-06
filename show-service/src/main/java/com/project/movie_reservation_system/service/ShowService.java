@@ -8,7 +8,7 @@ import org.springframework.data.domain.PageRequest;
 public interface ShowService {
     Show createNewShow(ShowRequestDto showRequestDto);
 
-    PaginationResponse<Show> getllShows(int page, int size);
+    PaginationResponse<Show> getAllShows(int page, int size);
 
     void deleteShowById(long showId);
 
