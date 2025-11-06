@@ -1,0 +1,127 @@
+package com.project.movie_reservation_system.service.impl;
+
+import com.project.movie_reservation_system.client.MovieServiceClient;
+import com.project.movie_reservation_system.client.SeatServiceClient;
+import com.project.movie_reservation_system.client.TheaterServiceClient;
+import com.project.movie_reservation_system.dto.*;
+import com.project.movie_reservation_system.entity.Show;
+import com.project.movie_reservation_system.exception.ShowNotFoundException;
+import com.project.movie_reservation_system.repository.ShowRepository;
+import com.project.movie_reservation_system.service.ShowService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+@Service
+public class ShowServiceImpl implements ShowService {
+
+    private final ShowRepository showRepository;
+    private final MovieServiceClient movieServiceClient;
+    private final TheaterServiceClient theaterServiceClient;
+    private final SeatServiceClient seatServiceClient;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public ShowServiceImpl(ShowRepository showRepository, MovieServiceClient movieServiceClient,
+            TheaterServiceClient theaterServiceClient, SeatServiceClient seatServiceClient,
+            RedisTemplate<String, Object> redisTemplate) {
+        this.showRepository = showRepository;
+        this.movieServiceClient = movieServiceClient;
+        this.theaterServiceClient = theaterServiceClient;
+        this.seatServiceClient = seatServiceClient;
+        this.redisTemplate = redisTemplate;
+    }
+
+    public Show createNewShow(ShowRequestDto showRequestDto) {
+        MovieDto movie = movieServiceClient.getMovieById(showRequestDto.getMovieId());
+        TheaterDto theater = theaterServiceClient.getTheaterById(showRequestDto.getTheaterId());
+
+        Show show = showRepository.save(Show.builder()
+                .movieId(showRequestDto.getMovieId())
+                .theaterId(showRequestDto.getTheaterId())
+                .startTime(showRequestDto.getStartTime())
+                .endTime(showRequestDto.getEndTime())
+                .build());
+
+        List<SeatDto> seats = new ArrayList<>();
+        showRequestDto.getSeats()
+                .forEach(seatStructure -> seats.addAll(
+                        seatServiceClient.createSeatsWithGivenPrice(
+                                seatStructure.getSeatCount(),
+                                seatStructure.getSeatPrice(),
+                                seatStructure.getArea(),
+                                show.getId())));
+        redisTemplate.opsForValue().set("show:id:" + show.getId(), show, 60, TimeUnit.SECONDS);
+        redisTemplate.delete("shows:page:*");
+        redisTemplate.delete("show:theater:" + theater.getId() + ":movieId:" + movie.getId());
+        return show;
+    }
+
+    public PaginationResponse<Show> getAllShows(int page, int size) {
+        String key = String.format("shows:page:%d:size:%d", page, size);
+        PaginationResponse<Show> response = (PaginationResponse<Show>) redisTemplate.opsForValue().get(key);
+
+        if (response != null) {
+            return response;
+        }
+
+        Page<Show> showPage = showRepository.findAll(PageRequest.of(page, size));
+        List<Show> shows = showPage.getContent();
+
+        response = PaginationResponse.<Show>builder()
+                .pageNumber(page)
+                .pageSize(size)
+                .totalPages(showPage.getTotalPages())
+                .totalElements(showPage.getTotalElements())
+                .data(shows)
+                .build();
+        redisTemplate.opsForValue().set(key, response, 60, TimeUnit.SECONDS);
+        return response;
+    }
+
+    public void deleteShowById(long showId) {
+        showRepository.deleteById(showId);
+        redisTemplate.delete("show:id:" + showId);
+    }
+
+    public PaginationResponse<Show> filterShowsByTheaterIdAndMovieId(Long theaterId, Long movieId,
+            PageRequest pageRequest) {
+        Page<Show> showPage;
+
+        if (theaterId == null && movieId == null) {
+            showPage = showRepository.findAll(pageRequest);
+        } else if (theaterId == null) {
+            showPage = showRepository.findByMovieId(movieId, pageRequest);
+        } else {
+            showPage = showRepository.findByTheaterIdAndMovieId(theaterId, movieId, pageRequest);
+        }
+
+        PaginationResponse<Show> response = PaginationResponse.<Show>builder()
+                .pageNumber(pageRequest.getPageNumber())
+                .pageSize(pageRequest.getPageSize())
+                .totalPages(showPage.getTotalPages())
+                .totalElements(showPage.getTotalElements())
+                .data(showPage.getContent())
+                .build();
+        redisTemplate.opsForValue().set("show:theater:" + theaterId + ":movieId:" + movieId, response);
+        return response;
+    }
+
+    public Show getShowById(long showId) {
+        Show show = (Show) redisTemplate.opsForValue().get("show:id:" + showId);
+
+        if (show != null) {
+            return show;
+        }
+
+        show = showRepository.findById(showId)
+                .orElseThrow(() -> new ShowNotFoundException(showId));
+        redisTemplate.opsForValue().set("show:id:" + showId, show, 60, TimeUnit.SECONDS);
+
+        return show;
+    }
+}
