@@ -27,6 +27,25 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+    
+  # Redis for Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: redis-rate-limiter
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
 
   # Auth Service
   auth-service:
@@ -52,12 +71,18 @@ services:
     container_name: gateway-service
     env_file:
       - ./env/gateway-service.env
+    environment:
+      - REDIS_HOST=redis  
+      - REDIS_PORT=6379
+      - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
     ports:
       - "8080:8080"
     networks:
       - app-network
     depends_on:
       discovery-service:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   # User Service
