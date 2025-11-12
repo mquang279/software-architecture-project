@@ -123,22 +123,22 @@ public class SeatServiceImpl implements SeatService {
     public void unlockSeats(List<Long> seatIds) {
         for (Long seatId : seatIds) {
             ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
-
-            if (lock.isHeldByCurrentThread()) {
-                try {
-                    seatRepository.findById(seatId).ifPresent(seat -> {
-                        if (seat.getStatus() == SeatStatus.LOCKED) {
-                            seat.setStatus(SeatStatus.UNBOOKED);
-                            seatRepository.save(seat);
-                        }
-                    });
-                } finally {
+            try {
+                seatRepository.findById(seatId).ifPresent(seat -> {
+                    if (seat.getStatus() == SeatStatus.LOCKED) {
+                        seat.setStatus(SeatStatus.UNBOOKED);
+                        seatRepository.save(seat);
+                    }
+                });
+            } finally {
+                if (lock.isHeldByCurrentThread()) {
                     lock.unlock();
-                    seatLockManager.removeLockForSeat(seatId);
                 }
+                seatLockManager.removeLockForSeat(seatId);
             }
         }
     }
+
 
     /**
      * Cập nhật trạng thái ghế (LOCKED -> BOOKED hoặc BOOKED -> UNBOOKED)

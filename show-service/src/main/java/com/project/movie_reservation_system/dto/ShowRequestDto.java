@@ -10,8 +10,8 @@ import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ShowRequestDto {
 
     private long movieId;
