@@ -1,6 +1,6 @@
 package com.project.reservation_service.client;
 
-import com.project.reservation_service.client.fallback.SeatServiceClientFallback;
+import com.project.reservation_service.client.fallback.SeatServiceClientFallbackFactory;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,18 +8,22 @@ import com.project.reservation_service.dto.SeatDto;
 
 import java.util.List;
 
-@FeignClient(name = "seat-service", fallback = SeatServiceClientFallback.class)
+@FeignClient(
+    name = "seat-service",
+    path = "/api/v1/seats",
+    fallbackFactory = SeatServiceClientFallbackFactory.class
+)
 public interface SeatServiceClient {
 
-    @GetMapping("/api/v1/seats/{seatId}")
-    SeatDto getSeatById(@PathVariable Long seatId);
+    @GetMapping("/{seatId}")
+    SeatDto getSeatById(@PathVariable("seatId") Long seatId);
 
-    @PostMapping("/api/v1/seats/lock")
+    @PostMapping("/lock")
     void lockSeats(@RequestBody List<Long> seatIds);
 
-    @PostMapping("/api/v1/seats/unlock")
+    @PostMapping("/unlock")
     void unlockSeats(@RequestBody List<Long> seatIds);
 
-    @PutMapping("/api/v1/seats/status")
-    void updateSeatStatus(@RequestBody List<Long> seatIds, @RequestParam String status);
+    @PutMapping("/status")
+    void updateSeatStatus(@RequestBody List<Long> seatIds, @RequestParam("status") String status);
 }
