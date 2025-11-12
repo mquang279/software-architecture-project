@@ -9,9 +9,12 @@ import com.project.movie_reservation_system.exception.SeatNotFoundException;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatLockManager;
 import com.project.movie_reservation_system.service.SeatService;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -21,10 +24,12 @@ import java.util.stream.IntStream;
 public class SeatServiceImpl implements SeatService {
     private final SeatRepository seatRepository;
     private final SeatLockManager seatLockManager;
+    private final EntityManager entityManager;
 
-    public SeatServiceImpl(SeatRepository seatRepository, SeatLockManager seatLockManager) {
+    public SeatServiceImpl(SeatRepository seatRepository, SeatLockManager seatLockManager, EntityManager entityManager) {
         this.seatRepository = seatRepository;
         this.seatLockManager = seatLockManager;
+        this.entityManager = entityManager;
     }
 
     public List<Seat> createSeatsWithGivenPrice(Long showId, int seats, double price, String area) {
@@ -60,6 +65,7 @@ public class SeatServiceImpl implements SeatService {
      * Lock ghế và đánh dấu là LOCKED
      * Giữ lock trong SeatLockManager cho đến khi gọi unlockSeats()
      */
+    @Transactional
     public void lockSeats(List<Long> seatIds) {
         for (Long seatId : seatIds) {
             ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
@@ -95,7 +101,8 @@ public class SeatServiceImpl implements SeatService {
     /**
      * Release locks của các ghế đã lock trước seatId
      */
-    private void releasePreviousLocks(List<Long> seatIds, Long currentSeatId) {
+    @Transactional
+    public void releasePreviousLocks(List<Long> seatIds, Long currentSeatId) {
         for (Long seatId : seatIds) {
             if (seatId.equals(currentSeatId)) {
                 break;
@@ -120,6 +127,7 @@ public class SeatServiceImpl implements SeatService {
      * Nếu ghế đang LOCKED, trả về UNBOOKED
      * Nếu ghế đã BOOKED, giữ nguyên
      */
+    @Transactional
     public void unlockSeats(List<Long> seatIds) {
         for (Long seatId : seatIds) {
             ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
@@ -128,6 +136,7 @@ public class SeatServiceImpl implements SeatService {
                     if (seat.getStatus() == SeatStatus.LOCKED) {
                         seat.setStatus(SeatStatus.UNBOOKED);
                         seatRepository.save(seat);
+                        entityManager.flush();
                     }
                 });
             } finally {
@@ -143,6 +152,7 @@ public class SeatServiceImpl implements SeatService {
     /**
      * Cập nhật trạng thái ghế (LOCKED -> BOOKED hoặc BOOKED -> UNBOOKED)
      */
+    @Transactional
     public void updateSeatStatus(List<Long> seatIds, String status) {
         SeatStatus seatStatus;
         try {
