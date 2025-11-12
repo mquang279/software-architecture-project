@@ -1,5 +1,6 @@
 package com.project.reservation_service.client;
 
+import com.project.reservation_service.client.fallback.SeatServiceClientFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -7,7 +8,7 @@ import com.project.reservation_service.dto.SeatDto;
 
 import java.util.List;
 
-@FeignClient(name = "seat-service")
+@FeignClient(name = "seat-service", fallback = SeatServiceClientFallback.class)
 public interface SeatServiceClient {
 
     @GetMapping("/api/v1/seats/{seatId}")

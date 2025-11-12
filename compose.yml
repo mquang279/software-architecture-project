@@ -10,6 +10,11 @@ services:
     networks:
       - app-network
     command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # Discovery Service
   discovery-service:
@@ -29,12 +34,12 @@ services:
       start_period: 40s
     
   # Redis for Rate Limiting
-  redis:
+  redis-ratelimit:
     image: redis:7-alpine
     container_name: redis-rate-limiter
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis-data:/data
     networks:
