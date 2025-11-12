@@ -1,4 +1,34 @@
 services:
+  zookeeper:
+    image: debezium/zookeeper:2.7.3.Final
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+  kafka:
+    image: debezium/kafka:2.7.3.Final
+    ports:
+      - 9092:9092
+    links:
+      - zookeeper
+    environment:
+      - ZOOKEEPER_CONNECT=zookeeper:2181
+
+  connect:
+    image: debezium/connect:2.7.3.Final
+    ports:
+      - 8083:8083
+      - 5005:5005
+    links:
+      - kafka
+      - postgres
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+
   redis:
     image: redis:latest
     container_name: redis-server
@@ -16,11 +46,6 @@ services:
       retries: 5
       start_period: 10s
     command: ["redis-server", "--appendonly", "yes"]
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   # Discovery Service
   discovery-service:
