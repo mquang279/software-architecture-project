@@ -42,7 +42,7 @@ public class ReservationController {
 
     @PostMapping("")
     public ResponseEntity<Reservation> createReservation(
-            @RequestBody ReservationRequestDto reservationRequestDto, Long userId) {
+            @RequestBody ReservationRequestDto reservationRequestDto,@RequestParam Long userId) {
         Reservation reservation = reservationService.createReservation(reservationRequestDto, userId);
 
         return ResponseEntity
@@ -50,13 +50,13 @@ public class ReservationController {
                 .body(reservation);
     }
 
-    @PostMapping("/api/v1/reservations/{reservationId}/confirm")
+    @PostMapping("/{reservationId}/confirm")
     public void confirmReservation(@PathVariable Long reservationId) {
         reservationService.confirmReservation(reservationId);
     }
 
 
-    @PostMapping("/api/v1/reservations/{reservationId}/cancel-by-payment")
+    @PostMapping("/{reservationId}/cancel-by-payment")
     public void cancelReservationByPayment(@PathVariable Long reservationId) {
         reservationService.cancelReservationByPayment(reservationId);
     }
