@@ -9,7 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.project.reservation_service.client.SeatServiceClient;
@@ -21,13 +20,8 @@ import com.project.reservation_service.exception.*;
 import com.project.reservation_service.repository.ReservationRepository;
 import com.project.reservation_service.service.ReservationService;
 
-import static com.project.reservation_service.constant.ExceptionMessages.*;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class ReservationServiceImpl implements ReservationService {
@@ -38,19 +32,17 @@ public class ReservationServiceImpl implements ReservationService {
     private final SeatServiceClient seatServiceClient;
     private final NotificationServiceClient notificationServiceClient;
 
-    @Autowired
     public ReservationServiceImpl(
             ReservationRepository reservationRepository,
             UserServiceClient userServiceClient,
             ShowServiceClient showServiceClient,
             SeatServiceClient seatServiceClient,
-            NotificationServiceClient notificationServiceClient
-            ) {
-          this.reservationRepository = reservationRepository;
-          this.userServiceClient = userServiceClient;
-          this.showServiceClient = showServiceClient;
-          this.seatServiceClient = seatServiceClient;
-          this.notificationServiceClient = notificationServiceClient;
+            NotificationServiceClient notificationServiceClient) {
+        this.reservationRepository = reservationRepository;
+        this.userServiceClient = userServiceClient;
+        this.showServiceClient = showServiceClient;
+        this.seatServiceClient = seatServiceClient;
+        this.notificationServiceClient = notificationServiceClient;
     }
 
     @Transactional
@@ -92,7 +84,6 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-
     @Override
     @Transactional
     public Reservation confirmReservation(Long reservationId) {
@@ -121,8 +112,7 @@ public class ReservationServiceImpl implements ReservationService {
                         show.getMovieId(),
                         show.getStartTime(),
                         reservation.getSeatsReservedIds().size(),
-                        reservation.getAmountPaid()
-                );
+                        reservation.getAmountPaid());
 
                 NotificationRequestDto notificationDto = NotificationRequestDto.builder()
                         .userId(reservation.getUserId())
@@ -162,8 +152,7 @@ public class ReservationServiceImpl implements ReservationService {
                 String payload = String.format(
                         "Thanh toán thất bại! Mã đặt chỗ #%d đã bị hủy. " +
                                 "Ghế đã được giải phóng. Vui lòng thử lại.",
-                        reservation.getId()
-                );
+                        reservation.getId());
 
                 NotificationRequestDto notificationDto = NotificationRequestDto.builder()
                         .userId(reservation.getUserId())
@@ -218,8 +207,7 @@ public class ReservationServiceImpl implements ReservationService {
         String payload = String.format(
                 "Huỷ vé thành công! Mã đặt chỗ: #%d. Số tiền hoàn: %.0f VND sẽ được hoàn lại trong 3-5 ngày làm việc.",
                 reservation.getId(),
-                reservation.getAmountPaid()
-        );
+                reservation.getAmountPaid());
 
         NotificationRequestDto notificationRequestDto = NotificationRequestDto.builder()
                 .userId(reservation.getUserId())
