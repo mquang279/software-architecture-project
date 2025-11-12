@@ -14,5 +14,5 @@ public class SeatDto {
     private double price;
     private int number;
     private String area;
-
+    private Long showId;
 }
