@@ -3,6 +3,9 @@ package com.project.reservation_service.service.impl;
 import com.project.reservation_service.client.NotificationServiceClient;
 import com.project.reservation_service.dto.*;
 import com.project.reservation_service.enums.NotificationType;
+
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,6 +23,8 @@ import com.project.reservation_service.exception.*;
 import com.project.reservation_service.repository.ReservationRepository;
 import com.project.reservation_service.service.ReservationService;
 
+import io.debezium.outbox.quarkus.ExportedEvent;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,6 +36,9 @@ public class ReservationServiceImpl implements ReservationService {
     private final ShowServiceClient showServiceClient;
     private final SeatServiceClient seatServiceClient;
     private final NotificationServiceClient notificationServiceClient;
+    
+    @Inject
+    private Event<ExportedEvent> event;
 
     public ReservationServiceImpl(
             ReservationRepository reservationRepository,
