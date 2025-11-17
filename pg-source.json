@@ -1,0 +1,17 @@
+{
+    "name": "reservation-db",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "reservation-db",
+        "database.port": "5432",
+        "database.user": "debezium",
+        "database.password": "mypassword",
+        "database.dbname": "postgres",
+        "slot.name": "reservation_slot",
+        "plugin.name": "pgoutput",
+        "topic.prefix": "dbserver1",
+        "schema.include.list": "public",
+        "table.include.list": "public.reservation"
+    }
+}

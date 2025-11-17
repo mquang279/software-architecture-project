@@ -5,6 +5,9 @@ services:
       - 2181:2181
       - 2888:2888
       - 3888:3888
+    networks:
+      - app-network
+
   kafka:
     image: debezium/kafka:2.7.3.Final
     ports:
@@ -13,21 +16,22 @@ services:
       - zookeeper
     environment:
       - ZOOKEEPER_CONNECT=zookeeper:2181
+    networks:
+      - app-network
 
   connect:
     image: debezium/connect:2.7.3.Final
     ports:
-      - 8083:8083
+      - 8084:8083
       - 5005:5005
-    links:
-      - kafka
-      - postgres
     environment:
       - BOOTSTRAP_SERVERS=kafka:9092
       - GROUP_ID=1
       - CONFIG_STORAGE_TOPIC=my_connect_configs
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_connect_statuses
+    networks:
+      - app-network
 
   redis:
     image: redis:latest
@@ -130,6 +134,37 @@ services:
       - "5433:5432"
     volumes:
       - user-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Reservation Orchestration
+  reservation-orchestrator:
+    build:
+      context: ./reservation-orchestrator
+      dockerfile: Dockerfile
+    container_name: reservation-orchestrator
+    env_file:
+      - ./env/reservation-orchestrator.env
+    ports:
+      - "8085:8088"
+    networks:
+      - app-network
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      user-db:
+        condition: service_started
+
+  orchestrator-db:
+    image: postgres:17-alpine
+    container_name: orchestrator-db
+    restart: always
+    env_file:
+      - ./env/orchestrator-db.env
+    ports:
+      - "5434:5432"
+    volumes:
+      - orchestrator-data:/var/lib/postgresql/data
     networks:
       - app-network
 
@@ -254,6 +289,7 @@ services:
       - "5436:5432"
     volumes:
       - reservation-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
@@ -360,6 +396,7 @@ volumes:
   theater-data:
   payment-data:
   redis-data:
+  orchestrator-data:
 
 networks:
   app-network:
