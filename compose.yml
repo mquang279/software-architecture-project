@@ -137,24 +137,6 @@ services:
     networks:
       - app-network
 
-  # Reservation Orchestration
-  reservation-orchestrator:
-    build:
-      context: ./reservation-orchestrator
-      dockerfile: Dockerfile
-    container_name: reservation-orchestrator
-    env_file:
-      - ./env/reservation-orchestrator.env
-    ports:
-      - "8085:8088"
-    networks:
-      - app-network
-    depends_on:
-      discovery-service:
-        condition: service_healthy
-      user-db:
-        condition: service_started
-
   orchestrator-db:
     image: postgres:17-alpine
     container_name: orchestrator-db

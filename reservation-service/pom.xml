@@ -83,6 +83,11 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+			<version>3.3.1</version>
+		</dependency>
 		<!-- <dependency>
 			<groupId>io.debezium</groupId>
 			<artifactId>debezium-quarkus-outbox</artifactId>
