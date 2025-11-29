@@ -1,5 +1,5 @@
 {
-    "name": "reservation-db",
+    "name": "reservation-outbox",
     "config": {
         "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
         "tasks.max": "1",
@@ -12,6 +12,13 @@
         "plugin.name": "pgoutput",
         "topic.prefix": "dbserver1",
         "schema.include.list": "public",
-        "table.include.list": "public.reservation"
+        "table.include.list": "public.outbox",
+        "time.precision.mode": "connect",
+        "transforms": "route",
+        "transforms.route.type": "io.debezium.transforms.outbox.EventRouter",
+        "transforms.route.route.by.field": "aggregate_type",
+        "transforms.route.route.topic.replacement": "events.${routedByValue}",
+        "transforms.route.table.field.event.key": "aggregate_id",
+        "transforms.route.table.field.event.payload": "payload"
     }
 }

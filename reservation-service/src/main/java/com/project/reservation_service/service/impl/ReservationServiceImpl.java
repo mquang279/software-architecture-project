@@ -1,5 +1,6 @@
 package com.project.reservation_service.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.reservation_service.client.NotificationServiceClient;
 import com.project.reservation_service.dto.*;
 import com.project.reservation_service.enums.NotificationType;
@@ -9,79 +10,93 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import com.project.reservation_service.client.SeatServiceClient;
 import com.project.reservation_service.client.ShowServiceClient;
 import com.project.reservation_service.client.UserServiceClient;
+import com.project.reservation_service.entity.Outbox;
 import com.project.reservation_service.entity.Reservation;
 import com.project.reservation_service.enums.ReservationStatus;
 import com.project.reservation_service.exception.*;
+import com.project.reservation_service.repository.OutboxRepository;
 import com.project.reservation_service.repository.ReservationRepository;
 import com.project.reservation_service.service.ReservationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReservationServiceImpl implements ReservationService {
 
     private final ReservationRepository reservationRepository;
+    private final OutboxRepository outboxRepository;
     private final UserServiceClient userServiceClient;
     private final ShowServiceClient showServiceClient;
     private final SeatServiceClient seatServiceClient;
     private final NotificationServiceClient notificationServiceClient;
-    
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+
     public ReservationServiceImpl(
             ReservationRepository reservationRepository,
             UserServiceClient userServiceClient,
             ShowServiceClient showServiceClient,
             SeatServiceClient seatServiceClient,
-            NotificationServiceClient notificationServiceClient) {
+            NotificationServiceClient notificationServiceClient,
+            KafkaTemplate<String, String> kafkaTemplate,
+            OutboxRepository outboxRepository,
+            ObjectMapper objectMapper) {
         this.reservationRepository = reservationRepository;
         this.userServiceClient = userServiceClient;
         this.showServiceClient = showServiceClient;
         this.seatServiceClient = seatServiceClient;
         this.notificationServiceClient = notificationServiceClient;
+        this.kafkaTemplate = kafkaTemplate;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
     @Override
-    public Reservation createReservation(ReservationRequestDto reservationRequestDto, Long userId) {
-        UserDto user = userServiceClient.getUserById(userId);
+    public Reservation createReservation(ReservationRequestDto dto, Long userId) {
+        userServiceClient.getUserById(userId);
+        showServiceClient.getShowById(dto.getShowId());
 
-        ShowDto show = showServiceClient.getShowById(reservationRequestDto.getShowId());
+        Reservation reservation = Reservation.builder()
+                .userId(userId)
+                .showId(dto.getShowId())
+                .seatsReservedIds(dto.getSeatIdsToReserve())
+                .amountPaid(dto.getAmount())
+                .reservationStatus(ReservationStatus.PENDING_SEAT_LOCK)
+                .build();
 
-        // 3. Lock seats
-        List<Long> seatIds = reservationRequestDto.getSeatIdsToReserve();
+        reservationRepository.save(reservation);
+
         try {
-            seatServiceClient.lockSeats(seatIds);
+            Map<String, Object> eventPayload = Map.of(
+                    "reservationId", reservation.getId(),
+                    "userId", reservation.getUserId(),
+                    "showId", reservation.getShowId(),
+                    "seatIds", reservation.getSeatsReservedIds(),
+                    "amount", reservation.getAmountPaid());
 
-            // 4. Validate amount
-            double totalPrice = seatIds.stream()
-                    .mapToDouble(id -> seatServiceClient.getSeatById(id).getPrice())
-                    .sum();
-
-            if (totalPrice != reservationRequestDto.getAmount()) {
-                throw new AmountNotMatchException();
-            }
-
-            // 6. Create reservation
-            Reservation reservation = Reservation.builder()
-                    .userId(userId)
-                    .showId(reservationRequestDto.getShowId())
-                    .seatsReservedIds(seatIds)
-                    .amountPaid(reservationRequestDto.getAmount())
-                    .reservationStatus(ReservationStatus.PENDING_PAYMENT)
+            Outbox outbox = Outbox.builder()
+                    .aggregateType("reservation")
+                    .aggregateId(String.valueOf(reservation.getId()))
+                    .type("RESERVATION_CREATED")
+                    .payload(objectMapper.writeValueAsString(eventPayload))
                     .build();
 
-            reservationRepository.save(reservation);
+            outboxRepository.save(outbox);
 
-            return reservation;
-        } catch (Exception e) {
-            seatServiceClient.unlockSeats(seatIds);
-            throw e;
+        } catch (Exception ex) {
+            System.err.println("Failed to save to outbox: " + ex.getMessage());
         }
+
+        return reservation;
     }
 
     @Override
@@ -221,7 +236,8 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public PaginationResponse<Reservation> getAllReservationsForUser(Long userId, int page, int size) {
-        UserDto user = userServiceClient.getUserById(userId);
+        // Validate user exists
+        userServiceClient.getUserById(userId);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Reservation> reservationPage = reservationRepository.findByUserId(userId, pageable);
@@ -234,4 +250,13 @@ public class ReservationServiceImpl implements ReservationService {
                 .data(reservationPage.getContent())
                 .build();
     }
+
+    // @Override
+    // @Transactional
+    // public Reservation createReservation(ReservationRequestDto reservation, Long
+    // userId) {
+
+    // throw new UnsupportedOperationException("Unimplemented method
+    // 'createReservation'");
+    // }
 }
