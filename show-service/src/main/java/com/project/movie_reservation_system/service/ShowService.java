@@ -14,7 +14,7 @@ public interface ShowService {
 
     void deleteShowById(long showId);
 
-    PaginationResponse<Show> filterShowsByMovieIdAndStartTime(Long movieId, Instant from, Instant to, PageRequest pageRequest);
+    PaginationResponse<Show> filterShows(Long movieId, Instant from, Instant to, Long theaterId, PageRequest pageRequest);
 
     Show getShowById(long showId);
 }

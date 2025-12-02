@@ -33,9 +33,10 @@ public class ShowController {
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to,
+            @RequestParam(required = false) Long theaterId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PaginationResponse<Show> response = showService.filterShowsByMovieIdAndStartTime(movieId, from, to,
+        PaginationResponse<Show> response = showService.filterShows(movieId, from, to, theaterId,
                 PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }

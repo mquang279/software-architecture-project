@@ -14,8 +14,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @Entity
 @Table(name="show", indexes={
-        @Index(name="idx_show_movie_id", columnList = "movie_id"),
-        @Index(name = "idx_show_movie_time", columnList = "movie_id, start_time")
+        @Index(name = "idx_show_movie_time_theater", columnList = "movie_id, start_time, theater_id")
 })
 public class Show {
 

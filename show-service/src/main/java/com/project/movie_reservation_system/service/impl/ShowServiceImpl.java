@@ -97,7 +97,7 @@ public class ShowServiceImpl implements ShowService {
         redisTemplate.delete("show:id:" + showId);
     }
 
-    public PaginationResponse<Show> filterShowsByMovieIdAndStartTime(Long movieId, Instant from, Instant to, PageRequest pageRequest) {
+    public PaginationResponse<Show> filterShows(Long movieId, Instant from, Instant to, Long theaterId, PageRequest pageRequest) {
 //        Object cachedObject = redisTemplate.opsForValue().get("show:theater:" + theaterId + ":movieId:" + movieId);
 //
 //        PaginationResponse<Show> response = objectMapper.convertValue(cachedObject,
@@ -109,12 +109,19 @@ public class ShowServiceImpl implements ShowService {
 //        }
         Page<Show> showPage;
 
-        if (from == null && movieId == null) {
+        // Chọn phim -> Chọn ngày -> Chọn rạp -> Chọn suất chiếu
+        if (movieId == null) {
+            // Không có filter nào
             showPage = showRepository.findAll(pageRequest);
-        } else if (from == null) {
+        } else if (from == null || to == null) {
+            // Chỉ có phim, chưa chọn ngày
             showPage = showRepository.findByMovieId(movieId, pageRequest);
-        } else {
+        } else if (theaterId == null) {
+            // Có phim + ngày, chưa chọn rạp
             showPage = showRepository.findByMovieIdAndStartTimeBetween(movieId, from, to, pageRequest);
+        } else {
+            // Đầy đủ: phim + ngày + rạp
+            showPage = showRepository.findByMovieIdAndStartTimeBetweenAndTheaterId(movieId, from, to, theaterId, pageRequest);
         }
 
         PaginationResponse<Show> response = PaginationResponse.<Show>builder()
