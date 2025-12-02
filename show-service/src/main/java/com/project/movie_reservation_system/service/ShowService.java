@@ -5,6 +5,8 @@ import com.project.movie_reservation_system.dto.ShowRequestDto;
 import com.project.movie_reservation_system.entity.Show;
 import org.springframework.data.domain.PageRequest;
 
+import java.time.Instant;
+
 public interface ShowService {
     Show createNewShow(ShowRequestDto showRequestDto);
 
@@ -12,7 +14,7 @@ public interface ShowService {
 
     void deleteShowById(long showId);
 
-    PaginationResponse<Show> filterShowsByTheaterIdAndMovieId(Long theaterId, Long movieId, PageRequest pageRequest);
+    PaginationResponse<Show> filterShowsByMovieIdAndStartTime(Long movieId, Instant from, Instant to, PageRequest pageRequest);
 
     Show getShowById(long showId);
 }

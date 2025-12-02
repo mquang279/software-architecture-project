@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+
 @RestController
 @RequestMapping("/api/v1/shows")
 public class ShowController {
@@ -28,11 +30,12 @@ public class ShowController {
 
     @GetMapping("/filter")
     public ResponseEntity<PaginationResponse<Show>> filterShows(
-            @RequestParam(required = false) Long theaterId,
             @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) Instant from,
+            @RequestParam(required = false) Instant to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PaginationResponse<Show> response = showService.filterShowsByTheaterIdAndMovieId(theaterId, movieId,
+        PaginationResponse<Show> response = showService.filterShowsByMovieIdAndStartTime(movieId, from, to,
                 PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }

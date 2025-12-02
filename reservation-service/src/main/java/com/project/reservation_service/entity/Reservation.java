@@ -17,6 +17,9 @@ import com.project.reservation_service.enums.ReservationStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name="reservation", indexes = {
+        @Index(name = "idx_res_user_id", columnList = "user_id")
+})
 public class Reservation {
 
     @Id
