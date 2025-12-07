@@ -303,6 +303,7 @@ services:
       - "5437:5432"
     volumes:
       - seat-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
