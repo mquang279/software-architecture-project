@@ -16,7 +16,7 @@ public interface SeatService {
 
     PaginationResponse<Seat> getSeatsByShowId(Long showId, int size, int page);
 
-    void processSeatLocking(Long reservationId, List<Long> seatIds);
+    void processSeatLocking(Long reservationId, Long userId, List<Long> seatIds);
 
     // void unlockSeats(List<Long> seatIds);
 

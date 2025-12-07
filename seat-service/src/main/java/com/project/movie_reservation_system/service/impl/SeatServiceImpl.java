@@ -175,10 +175,9 @@ public class SeatServiceImpl implements SeatService {
                 .allMatch(seat -> seat.getStatus() == SeatStatus.UNBOOKED);
     }
 
-
     @Transactional
     @Override
-    public void processSeatLocking(Long reservationId, List<Long> seatIds) {
+    public void processSeatLocking(Long reservationId, Long userId, List<Long> seatIds) {
         try {
             List<Seat> seats = seatRepository.findAllByIdWithLock(seatIds);
 
@@ -196,13 +195,16 @@ public class SeatServiceImpl implements SeatService {
                 }
             }
 
+            double totalPrice = 0;
+
             for (Seat seat : seats) {
                 seat.setStatus(SeatStatus.LOCKED);
+                totalPrice += seat.getPrice();
             }
             seatRepository.saveAll(seats);
 
             saveOutboxEvent(reservationId, "SEATS_LOCKED",
-                    new SeatsLockedEvent(reservationId, seatIds));
+                    new SeatsLockedEvent(reservationId, userId, totalPrice, seatIds));
 
         } catch (Exception e) {
             saveOutboxEvent(reservationId, "SEAT_LOCK_FAILED",
@@ -215,7 +217,7 @@ public class SeatServiceImpl implements SeatService {
         try {
             String payload = mapper.writeValueAsString(object);
             Outbox event = Outbox.builder()
-                    .aggregateType("SEAT")
+                    .aggregateType("seat")
                     .aggregateId(String.valueOf(reservationId))
                     .type(eventType)
                     .payload(payload)

@@ -12,5 +12,9 @@ import lombok.NoArgsConstructor;
 public class SeatsLockedEvent {
     private long reservationId;
 
+    private long userId;
+
+    private double totalPrice;
+
     private List<Long> seatIds;
 }

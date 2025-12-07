@@ -32,7 +32,7 @@ public class SeatEventListener {
 
             System.out.println("Processing lock for reservation: " + event.getReservationId());
 
-            seatService.processSeatLocking(event.getReservationId(), event.getSeatIds());
+            seatService.processSeatLocking(event.getReservationId(), event.getUserId(), event.getSeatIds());
 
         } catch (Exception e) {
             System.err.println("Error processing message: " + e.getMessage());
