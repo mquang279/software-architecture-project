@@ -25,4 +25,7 @@ public class Seat {
     private double price;
     private int number;
     private String area;
+
+    @Version
+    private Long version;
 }
