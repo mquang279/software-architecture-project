@@ -191,7 +191,7 @@ export const options = {
 
 // Read workload - Test filterShows API with various filter combinations
 export function readWorkload() {
-    const operation = Math.floor(Math.random() * 3);
+    const operation = Math.floor(Math.random() * 4);
     let res;
     const page = Math.floor(Math.random() * 10);
     const size = 10 + Math.floor(Math.random() * 11); // size between 10 and 20

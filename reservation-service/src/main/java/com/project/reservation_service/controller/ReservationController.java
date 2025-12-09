@@ -62,7 +62,7 @@ public class ReservationController {
 
     @PostMapping("")
     public ResponseEntity<Reservation> createReservation(
-            @RequestBody ReservationRequestDto reservationRequestDto,@RequestParam Long userId) {
+            @RequestBody ReservationRequestDto reservationRequestDto, @RequestParam Long userId) {
         Reservation reservation = reservationService.createReservation(reservationRequestDto, userId);
 
         return ResponseEntity
@@ -70,29 +70,9 @@ public class ReservationController {
                 .body(reservation);
     }
 
-    @PostMapping("/{reservationId}/confirm")
-    public void confirmReservation(@PathVariable Long reservationId) {
-        reservationService.confirmReservation(reservationId);
-    }
-
-
-    @PostMapping("/{reservationId}/cancel-by-payment")
-    public void cancelReservationByPayment(@PathVariable Long reservationId) {
-        reservationService.cancelReservationByPayment(reservationId);
-    }
-
     @GetMapping("/{reservationId}")
     public ResponseEntity<Reservation> getReservationById(@PathVariable long reservationId) {
         Reservation reservation = reservationService.getReservationById(reservationId);
         return ResponseEntity.ok(reservation);
     }
-
-    @DeleteMapping("/{reservationId}")
-    public ResponseEntity<Reservation> cancelReservation(@PathVariable long reservationId) {
-        Reservation reservation = reservationService.cancelReservation(reservationId);
-        return ResponseEntity.ok(reservation);
-    }
-
-
-
 }
