@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name="seats",  indexes={
+        @Index(name = "idx_seat_show_id", columnList = "show_id")
+})
 public class Seat {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;

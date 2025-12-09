@@ -13,6 +13,7 @@ import com.project.movie_reservation_system.exception.SeatNotFoundException;
 import com.project.movie_reservation_system.repository.OutboxRepository;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatService;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;

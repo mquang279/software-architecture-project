@@ -51,6 +51,7 @@ services:
       start_period: 10s
     command: ["redis-server", "--appendonly", "yes"]
 
+
   # Discovery Service
   discovery-service:
     build:

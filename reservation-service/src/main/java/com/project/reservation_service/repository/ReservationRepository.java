@@ -10,4 +10,5 @@ import com.project.reservation_service.entity.Reservation;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     Page<Reservation> findByUserId(Long userId, Pageable pageable);
+
 }

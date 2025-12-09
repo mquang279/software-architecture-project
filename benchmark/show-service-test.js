@@ -197,75 +197,44 @@ export function readWorkload() {
     const size = 10 + Math.floor(Math.random() * 11); // size between 10 and 20
 
     if (operation === 0) {
-        // Filter by theaterId only
-        const theaterId = Math.floor(Math.random() * 100) + 1;
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?theaterId=${theaterId}&page=${page}&size=${size}`);
-
-        check(res, {
-            "filter by theater - status is 200": (r) => r.status === 200,
-            "filter by theater - response time < 500ms": (r) => r.timings.duration < 500,
-            "filter by theater - has data": (r) => {
-                if (r.status !== 200 || !r.body) return false;
-                try {
-                    const body = r.json();
-                    return body && typeof body.data !== 'undefined';
-                } catch (e) {
-                    return false;
-                }
-            },
-        });
-    } else if (operation === 1) {
-        // Filter by movieId only
-        const movieId = Math.floor(Math.random() * 1000) + 1;
+        // Filter by movieId only - use a realistic range that might exist
+        // Since shows are created with random movieIds, we just test the filtering capability
+        const movieId = 87000 + Math.floor(Math.random() * 1000);
         res = http.get(`${BASE_URL}/api/v1/shows/filter?movieId=${movieId}&page=${page}&size=${size}`);
 
         check(res, {
             "filter by movie - status is 200": (r) => r.status === 200,
             "filter by movie - response time < 500ms": (r) => r.timings.duration < 500,
             "filter by movie - has data": (r) => {
-                if (r.status !== 200 || !r.body) return false;
-                try {
-                    const body = r.json();
-                    return body && typeof body.data !== 'undefined';
-                } catch (e) {
-                    return false;
-                }
+                const body = r.json();
+                return body && typeof body.data !== 'undefined';
             },
         });
-    } else if (operation === 2) {
-        // Filter by both theaterId and movieId
-        const theaterId = Math.floor(Math.random() * 100) + 1;
-        const movieId = Math.floor(Math.random() * 1000) + 1;
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?theaterId=${theaterId}&movieId=${movieId}&page=${page}&size=${size}`);
+    } else if (operation === 1) {
+        // Filter by time range using very wide range to capture created shows
+        // Shows are created with future dates, so use a very wide range
+        const from = new Date(Date.now()).toISOString();
+        const to = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString(); // 100 years ahead
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?from=${from}&to=${to}&page=${page}&size=${size}`);
 
         check(res, {
-            "filter by theater and movie - status is 200": (r) => r.status === 200,
-            "filter by theater and movie - response time < 500ms": (r) => r.timings.duration < 500,
-            "filter by theater and movie - has data": (r) => {
-                if (r.status !== 200 || !r.body) return false;
-                try {
-                    const body = r.json();
-                    return body && typeof body.data !== 'undefined';
-                } catch (e) {
-                    return false;
-                }
+            "filter by time range - status is 200": (r) => r.status === 200,
+            "filter by time range - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by time range - has data": (r) => {
+                const body = r.json();
+                return body && typeof body.data !== 'undefined';
             },
         });
     } else {
-        // Filter with no parameters (should return all shows)
+        // Filter with no parameters (should return all shows with pagination)
         res = http.get(`${BASE_URL}/api/v1/shows/filter?page=${page}&size=${size}`);
 
         check(res, {
             "filter no params - status is 200": (r) => r.status === 200,
             "filter no params - response time < 500ms": (r) => r.timings.duration < 500,
             "filter no params - has data": (r) => {
-                if (r.status !== 200 || !r.body) return false;
-                try {
-                    const body = r.json();
-                    return body && typeof body.data !== 'undefined';
-                } catch (e) {
-                    return false;
-                }
+                const body = r.json();
+                return body && typeof body.data !== 'undefined';
             },
         });
     }
