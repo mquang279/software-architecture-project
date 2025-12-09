@@ -13,10 +13,10 @@ import com.project.movie_reservation_system.exception.SeatNotFoundException;
 import com.project.movie_reservation_system.repository.OutboxRepository;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatService;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -26,13 +26,11 @@ public class SeatServiceImpl implements SeatService {
 
     private final OutboxRepository outboxRepository;
     private final SeatRepository seatRepository;
-    private final ObjectMapper mapper;
+    private final SeatLockManager seatLockManager;
 
-    public SeatServiceImpl(SeatRepository seatRepository,
-            ObjectMapper objectMapper, OutboxRepository seatOutboxRepository) {
+    public SeatServiceImpl(SeatRepository seatRepository, SeatLockManager seatLockManager) {
         this.seatRepository = seatRepository;
-        this.mapper = objectMapper;
-        this.outboxRepository = seatOutboxRepository;
+        this.seatLockManager = seatLockManager;
     }
 
     public List<Seat> createSeatsWithGivenPrice(Long showId, int seats, double price, String area) {
@@ -64,30 +62,25 @@ public class SeatServiceImpl implements SeatService {
                 .build();
     }
 
-    public boolean areAllSeatsUnbooked(List<Long> seatIds) {
-        List<Seat> seats = seatRepository.findAllById(seatIds);
+    /**
+     * Lock ghế và đánh dấu là LOCKED
+     * Giữ lock trong SeatLockManager cho đến khi gọi unlockSeats()
+     */
+    public void lockSeats(List<Long> seatIds) {
+        for (Long seatId : seatIds) {
+            ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
+            boolean acquired = lock.tryLock();
 
-        if (seats.size() != seatIds.size()) {
-            throw new SeatNotFoundException(0L);
-        }
+            if (!acquired) {
 
-        return seats.stream()
-                .allMatch(seat -> seat.getStatus() == SeatStatus.UNBOOKED);
-    }
-
-    @Transactional
-    @Override
-    public void processSeatLocking(Long reservationId, Long userId, List<Long> seatIds) {
-        try {
-            List<Seat> seats = seatRepository.findAllByIdWithLock(seatIds);
-
-            if (seats.size() != seatIds.size()) {
-                saveOutboxEvent(reservationId, "SEAT_LOCK_FAILED",
-                        new SeatLockFailedEvent(reservationId, "One or more seats not found"));
-                return;
+                releasePreviousLocks(seatIds, seatId);
+                throw new SeatLockAcquiredException();
             }
 
-            for (Seat seat : seats) {
+            try {
+                Seat seat = seatRepository.findById(seatId)
+                        .orElseThrow(() -> new SeatNotFoundException(seatId));
+
                 if (seat.getStatus() != SeatStatus.UNBOOKED) {
                     saveOutboxEvent(reservationId, "SEAT_LOCK_FAILED",
                             new SeatLockFailedEvent(reservationId, "Seat " + seat.getId() + " is already taken"));
@@ -99,37 +92,75 @@ public class SeatServiceImpl implements SeatService {
 
             for (Seat seat : seats) {
                 seat.setStatus(SeatStatus.LOCKED);
-                totalPrice += seat.getPrice();
+                seatRepository.save(seat);
+
+            } catch (Exception e) {
+                lock.unlock();
+                throw e;
             }
-            seatRepository.saveAll(seats);
+        }
+        // Tất cả locks vẫn đang được giữ trong SeatLockManager
+    }
 
-            saveOutboxEvent(reservationId, "SEATS_LOCKED",
-                    new SeatsLockedEvent(reservationId, userId, totalPrice, seatIds));
-
-        } catch (Exception e) {
-            saveOutboxEvent(reservationId, "SEAT_LOCK_FAILED",
-                    new SeatLockFailedEvent(reservationId, "System error: " + e.getMessage()));
-            throw e;
+    /**
+     * Release locks của các ghế đã lock trước seatId
+     */
+    private void releasePreviousLocks(List<Long> seatIds, Long currentSeatId) {
+        for (Long seatId : seatIds) {
+            if (seatId.equals(currentSeatId)) {
+                break;
+            }
+            ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
+            if (lock.isHeldByCurrentThread()) {
+                // Trả ghế về UNBOOKED
+                seatRepository.findById(seatId).ifPresent(seat -> {
+                    if (seat.getStatus() == SeatStatus.LOCKED) {
+                        seat.setStatus(SeatStatus.UNBOOKED);
+                        seatRepository.save(seat);
+                    }
+                });
+                lock.unlock();
+                seatLockManager.removeLockForSeat(seatId);
+            }
         }
     }
 
-    private void saveOutboxEvent(Long reservationId, String eventType, Object object) {
+    /**
+     * Unlock ghế và xóa lock khỏi manager
+     * Nếu ghế đang LOCKED, trả về UNBOOKED
+     * Nếu ghế đã BOOKED, giữ nguyên
+     */
+    public void unlockSeats(List<Long> seatIds) {
+        for (Long seatId : seatIds) {
+            ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
+            try {
+                seatRepository.findById(seatId).ifPresent(seat -> {
+                    if (seat.getStatus() == SeatStatus.LOCKED) {
+                        seat.setStatus(SeatStatus.UNBOOKED);
+                        seatRepository.save(seat);
+                    }
+                });
+            } finally {
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+                seatLockManager.removeLockForSeat(seatId);
+            }
+        }
+    }
+
+
+    /**
+     * Cập nhật trạng thái ghế (LOCKED -> BOOKED hoặc BOOKED -> UNBOOKED)
+     */
+    public void updateSeatStatus(List<Long> seatIds, String status) {
+        SeatStatus seatStatus;
         try {
-            String payload = mapper.writeValueAsString(object);
-            Outbox event = Outbox.builder()
-                    .aggregateType("seat")
-                    .aggregateId(String.valueOf(reservationId))
-                    .type(eventType)
-                    .payload(payload)
-                    .build();
-            outboxRepository.save(event);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Could not serialize event payload", e);
+            seatStatus = SeatStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid seat status: " + status);
         }
-    }
 
-    @Override
-    public void handlePaymentStatus(Long reservationId, List<Long> seatIds, PaymentStatus status) {
         for (Long seatId : seatIds) {
             Seat seat = this.seatRepository.findById(seatId).get();
             if (status == PaymentStatus.SUCCESS) {
