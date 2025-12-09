@@ -11,11 +11,11 @@ import com.project.movie_reservation_system.service.PaymentService;
 
 @Component
 @KafkaListener(topics = "events.seat", groupId = "payment-service")
-public class PaymentEventListener {
+public class SeatEventListener {
     private final PaymentService paymentService;
     private final ObjectMapper mapper;
 
-    public PaymentEventListener(PaymentService paymentService, ObjectMapper mapper) {
+    public SeatEventListener(PaymentService paymentService, ObjectMapper mapper) {
         this.paymentService = paymentService;
         this.mapper = mapper;
     }
@@ -23,15 +23,18 @@ public class PaymentEventListener {
     @KafkaHandler
     public void handlePayment(String message) {
         try {
-            JsonNode rootNode = mapper.readTree(message);
 
-            String payloadString = rootNode.has("payload")
-                    ? rootNode.get("payload").asText()
-                    : message;
+            JsonNode root = mapper.readTree(message);
 
-            SeatLockedEvent event = mapper.readValue(payloadString, SeatLockedEvent.class);
+            JsonNode envelope = root.get("payload");
 
-            System.out.println("Handle payment: " + event);
+            String eventType = envelope.get("type").asText();
+            String aggregateId = envelope.get("aggregate_id").asText();
+            String createdAt = envelope.get("created_at").asText();
+
+            JsonNode businessDataNode = envelope.get("payload");
+
+            SeatLockedEvent event = mapper.treeToValue(businessDataNode, SeatLockedEvent.class);
 
             paymentService.processPaymentForReservation(event.getReservationId(), event.getUserId(),
                     event.getTotalPrice(), event.getSeatIds());

@@ -51,28 +51,28 @@ public class PaymentServiceImpl implements PaymentService {
         boolean isSuccess = simulatePayment();
 
         if (isSuccess) {
-            handlePaymentSuccess(payment);
+            handlePaymentSuccess(payment, seatIds);
         } else {
-            handlePaymentFail(payment);
+            handlePaymentFail(payment, seatIds);
         }
     }
 
-    private void handlePaymentSuccess(Payment payment) {
+    private void handlePaymentSuccess(Payment payment, List<Long> seatIds) {
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(Instant.now());
         paymentRepository.save(payment);
 
         PaymentSuccessEvent event = new PaymentSuccessEvent(payment.getReservationId(), payment.getUserId(),
-                payment.getAmount());
+                payment.getAmount(), seatIds);
         saveOutboxEvent(payment.getId(), "PAYMENT_SUCCESS", event);
     }
 
-    private void handlePaymentFail(Payment payment) {
+    private void handlePaymentFail(Payment payment, List<Long> seatIds) {
         payment.setStatus(PaymentStatus.FAILED);
         paymentRepository.save(payment);
 
         PaymentFailEvent event = new PaymentFailEvent(payment.getReservationId(), payment.getUserId(),
-                payment.getAmount());
+                payment.getAmount(), seatIds);
         saveOutboxEvent(payment.getId(), "PAYMENT_FAIL", event);
     }
 
@@ -97,6 +97,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        return Math.random() < 0.9;
+        return Math.random() < 0.5;
     }
 }

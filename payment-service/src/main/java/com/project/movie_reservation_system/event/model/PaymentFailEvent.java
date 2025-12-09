@@ -1,5 +1,7 @@
 package com.project.movie_reservation_system.event.model;
 
+import java.util.List;
+
 import com.project.movie_reservation_system.enums.PaymentStatus;
 
 import lombok.AllArgsConstructor;
@@ -15,6 +17,8 @@ public class PaymentFailEvent {
     private long userId;
 
     private double amount;
+
+    private List<Long> seatIds;
 
     private final PaymentStatus status = PaymentStatus.FAILED;
 }
