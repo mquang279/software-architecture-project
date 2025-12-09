@@ -1,135 +1,102 @@
 package com.project.movie_reservation_system.service.impl;
 
-import com.project.movie_reservation_system.client.ReservationServiceClient;
-import com.project.movie_reservation_system.dto.PaginationResponse;
-import com.project.movie_reservation_system.dto.PaymentRequestDto;
-import com.project.movie_reservation_system.dto.PaymentResponseDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.movie_reservation_system.entity.Outbox;
 import com.project.movie_reservation_system.entity.Payment;
+import com.project.movie_reservation_system.enums.PaymentMethod;
 import com.project.movie_reservation_system.enums.PaymentStatus;
+import com.project.movie_reservation_system.event.model.PaymentFailEvent;
+import com.project.movie_reservation_system.event.model.PaymentSuccessEvent;
+import com.project.movie_reservation_system.repository.OutboxRepository;
 import com.project.movie_reservation_system.repository.PaymentRepository;
 import com.project.movie_reservation_system.service.PaymentService;
+
 import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 @Service
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
-    private final ReservationServiceClient reservationServiceClient;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper mapper;
 
-    public PaymentServiceImpl(PaymentRepository paymentRepository, ReservationServiceClient reservationServiceClient) {
+    public PaymentServiceImpl(PaymentRepository paymentRepository, OutboxRepository outboxRepository,
+            ObjectMapper mapper) {
         this.paymentRepository = paymentRepository;
-        this.reservationServiceClient = reservationServiceClient;
+        this.mapper = mapper;
+        this.outboxRepository = outboxRepository;
     }
 
-    @Override
     @Transactional
-    public PaymentResponseDto processPayment(PaymentRequestDto requestDto, Long userId) {
+    @Override
+    public void processPaymentForReservation(Long reservationId, Long userId, double totalPrice, List<Long> seatIds) {
+        if (paymentRepository.findByReservationIdAndUserId(reservationId, userId).isPresent()) {
+            throw new RuntimeException();
+        }
 
         Payment payment = Payment.builder()
-                .reservationId(requestDto.getReservationId())
+                .reservationId(reservationId)
                 .userId(userId)
-                .amount(requestDto.getAmount())
-                .paymentMethod(requestDto.getPaymentMethod())
-                .status(PaymentStatus.PENDING)
-                .createdAt(Instant.now())
-                .build();
+                .amount(totalPrice)
+                .paymentMethod(PaymentMethod.CREDIT_CARD)
+                .status(PaymentStatus.PENDING).build();
 
-        payment = paymentRepository.save(payment);
+        paymentRepository.save(payment);
 
-        //  Giả lập xử lý thanh toán (90% success rate)
-        boolean paymentSuccess = simulatePayment();
+        boolean isSuccess = simulatePayment();
 
-        if (paymentSuccess) {
-            // Payment thành công
-            payment.setStatus(PaymentStatus.SUCCESS);
-            payment.setPaidAt(Instant.now());
-            paymentRepository.save(payment);
-
-            try {
-                reservationServiceClient.confirmReservation(payment.getReservationId());
-            } catch (Exception e) {
-                payment.setStatus(PaymentStatus.FAILED);
-                paymentRepository.save(payment);
-
-                return mapToResponseDto(payment, "Payment successful but reservation confirmation failed");
-            }
-
-            return mapToResponseDto(payment, "Payment processed successfully");
-
+        if (isSuccess) {
+            handlePaymentSuccess(payment);
         } else {
-            // Payment thất bại
-            payment.setStatus(PaymentStatus.FAILED);
-            paymentRepository.save(payment);
-
-            // Thông báo cho Reservation Service hủy
-            try {
-                reservationServiceClient.cancelReservationByPayment(payment.getReservationId());
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to cancel reservation {}");
-            }
-
-            return mapToResponseDto(payment, "Payment failed. Please try again");
+            handlePaymentFail(payment);
         }
     }
 
-    @Override
-    public PaymentResponseDto getPaymentById(Long paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found with id: " + paymentId));
+    private void handlePaymentSuccess(Payment payment) {
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setPaidAt(Instant.now());
+        paymentRepository.save(payment);
 
-        return mapToResponseDto(payment, "Payment found");
+        PaymentSuccessEvent event = new PaymentSuccessEvent(payment.getReservationId(), payment.getUserId(),
+                payment.getAmount());
+        saveOutboxEvent(payment.getId(), "PAYMENT_SUCCESS", event);
     }
 
-    @Override
-    public PaymentResponseDto getPaymentByReservationId(Long reservationId) {
-        Payment payment = paymentRepository.findByReservationId(reservationId)
-                .orElseThrow(() -> new RuntimeException("Payment not found for reservation: " + reservationId));
+    private void handlePaymentFail(Payment payment) {
+        payment.setStatus(PaymentStatus.FAILED);
+        paymentRepository.save(payment);
 
-        return mapToResponseDto(payment, "Payment found");
+        PaymentFailEvent event = new PaymentFailEvent(payment.getReservationId(), payment.getUserId(),
+                payment.getAmount());
+        saveOutboxEvent(payment.getId(), "PAYMENT_FAIL", event);
     }
 
-
-    @Override
-    public PaginationResponse<Payment> getPaymentsByUserId(Long userId, int page, int size) {
-        Page<Payment> paymentPage = paymentRepository.findByUserId(userId, PageRequest.of(page,  size));
-        List<Payment> payments = paymentPage.getContent();
-        return PaginationResponse.<Payment>builder()
-                .pageNumber(page)
-                .pageSize(size)
-                .totalPages(paymentPage.getTotalPages())
-                .totalElements(paymentPage.getTotalElements())
-                .data(payments)
-                .build();
+    private void saveOutboxEvent(Long paymentId, String eventType, Object object) {
+        try {
+            String payload = mapper.writeValueAsString(object);
+            Outbox event = Outbox.builder()
+                    .aggregateType("payment")
+                    .aggregateId(String.valueOf(paymentId))
+                    .type(eventType)
+                    .payload(payload)
+                    .build();
+            outboxRepository.save(event);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not serialize event payload", e);
+        }
     }
 
-
-    /**
-     * Giả lập xử lý thanh toán (90% thành công)
-     */
     private boolean simulatePayment() {
         try {
-            Thread.sleep(1000); // Giả lập delay xử lý
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        return Math.random() < 0.9; // 90% success rate
-    }
-
-    private PaymentResponseDto mapToResponseDto(Payment payment, String message) {
-        return PaymentResponseDto.builder()
-                .paymentId(payment.getId())
-                .reservationId(payment.getReservationId())
-                .amount(payment.getAmount())
-                .paymentMethod(payment.getPaymentMethod())
-                .status(payment.getStatus())
-                .createdAt(payment.getCreatedAt())
-                .paidAt(payment.getPaidAt())
-                .message(message)
-                .build();
+        return Math.random() < 0.9;
     }
 }

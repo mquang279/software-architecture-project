@@ -137,19 +137,6 @@ services:
     networks:
       - app-network
 
-  orchestrator-db:
-    image: postgres:17-alpine
-    container_name: orchestrator-db
-    restart: always
-    env_file:
-      - ./env/orchestrator-db.env
-    ports:
-      - "5434:5432"
-    volumes:
-      - orchestrator-data:/var/lib/postgresql/data
-    networks:
-      - app-network
-
   # Movie Service
   movie-service:
     build:
@@ -240,6 +227,7 @@ services:
       - "5440:5432"
     volumes:
       - payment-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
@@ -379,7 +367,6 @@ volumes:
   theater-data:
   payment-data:
   redis-data:
-  orchestrator-data:
 
 networks:
   app-network:

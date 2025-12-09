@@ -8,11 +8,11 @@ import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Outbox;
 import com.project.movie_reservation_system.entity.Seat;
 import com.project.movie_reservation_system.enums.SeatStatus;
-import com.project.movie_reservation_system.event.ReservationCreatedEvent;
-import com.project.movie_reservation_system.event.SeatLockFailedEvent;
-import com.project.movie_reservation_system.event.SeatsLockedEvent;
+import com.project.movie_reservation_system.event.model.ReservationCreatedEvent;
+import com.project.movie_reservation_system.event.model.SeatLockFailedEvent;
+import com.project.movie_reservation_system.event.model.SeatsLockedEvent;
 import com.project.movie_reservation_system.exception.SeatNotFoundException;
-import com.project.movie_reservation_system.repository.SeatOutboxRepository;
+import com.project.movie_reservation_system.repository.OutboxRepository;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatService;
 import jakarta.persistence.EntityManager;
@@ -29,17 +29,15 @@ import java.util.stream.IntStream;
 @Service
 public class SeatServiceImpl implements SeatService {
 
-    private final SeatOutboxRepository seatOutboxRepository;
+    private final OutboxRepository outboxRepository;
     private final SeatRepository seatRepository;
-    private final EntityManager entityManager;
     private final ObjectMapper mapper;
 
     public SeatServiceImpl(SeatRepository seatRepository,
-            EntityManager entityManager, ObjectMapper objectMapper, SeatOutboxRepository seatOutboxRepository) {
+            ObjectMapper objectMapper, OutboxRepository seatOutboxRepository) {
         this.seatRepository = seatRepository;
-        this.entityManager = entityManager;
         this.mapper = objectMapper;
-        this.seatOutboxRepository = seatOutboxRepository;
+        this.outboxRepository = seatOutboxRepository;
     }
 
     public List<Seat> createSeatsWithGivenPrice(Long showId, int seats, double price, String area) {
@@ -222,7 +220,7 @@ public class SeatServiceImpl implements SeatService {
                     .type(eventType)
                     .payload(payload)
                     .build();
-            seatOutboxRepository.save(event);
+            outboxRepository.save(event);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Could not serialize event payload", e);
         }

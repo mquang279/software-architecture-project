@@ -1,4 +1,4 @@
-package com.project.movie_reservation_system.event;
+package com.project.movie_reservation_system.event.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

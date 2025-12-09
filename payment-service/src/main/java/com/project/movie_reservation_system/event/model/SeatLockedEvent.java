@@ -1,4 +1,4 @@
-package com.project.movie_reservation_system.event;
+package com.project.movie_reservation_system.event.model;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SeatsLockedEvent {
+public class SeatLockedEvent {
     private long reservationId;
 
     private long userId;
