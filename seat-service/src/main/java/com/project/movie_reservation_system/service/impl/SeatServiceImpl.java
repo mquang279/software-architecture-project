@@ -1,29 +1,24 @@
 package com.project.movie_reservation_system.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Outbox;
 import com.project.movie_reservation_system.entity.Seat;
+import com.project.movie_reservation_system.enums.PaymentStatus;
 import com.project.movie_reservation_system.enums.SeatStatus;
-import com.project.movie_reservation_system.event.model.ReservationCreatedEvent;
 import com.project.movie_reservation_system.event.model.SeatLockFailedEvent;
 import com.project.movie_reservation_system.event.model.SeatsLockedEvent;
 import com.project.movie_reservation_system.exception.SeatNotFoundException;
 import com.project.movie_reservation_system.repository.OutboxRepository;
 import com.project.movie_reservation_system.repository.SeatRepository;
 import com.project.movie_reservation_system.service.SeatService;
-import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 @Service
@@ -68,99 +63,6 @@ public class SeatServiceImpl implements SeatService {
                 .data(seats.getContent())
                 .build();
     }
-
-    /**
-     * Release locks của các ghế đã lock trước seatId
-     */
-    // @Transactional
-    // public void releasePreviousLocks(List<Long> seatIds, Long currentSeatId) {
-    // for (Long seatId : seatIds) {
-    // if (seatId.equals(currentSeatId)) {
-    // break;
-    // }
-    // ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
-    // if (lock.isHeldByCurrentThread()) {
-    // // Trả ghế về UNBOOKED
-    // seatRepository.findById(seatId).ifPresent(seat -> {
-    // if (seat.getStatus() == SeatStatus.LOCKED) {
-    // seat.setStatus(SeatStatus.UNBOOKED);
-    // seatRepository.save(seat);
-    // }
-    // });
-    // lock.unlock();
-    // seatLockManager.removeLockForSeat(seatId);
-    // }
-    // }
-    // }
-
-    /**
-     * Unlock ghế và xóa lock khỏi manager
-     * Nếu ghế đang LOCKED, trả về UNBOOKED
-     * Nếu ghế đã BOOKED, giữ nguyên
-     */
-    // @Transactional
-    // public void unlockSeats(List<Long> seatIds) {
-    // for (Long seatId : seatIds) {
-    // ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
-    // try {
-    // seatRepository.findById(seatId).ifPresent(seat -> {
-    // if (seat.getStatus() == SeatStatus.LOCKED) {
-    // seat.setStatus(SeatStatus.UNBOOKED);
-    // seatRepository.save(seat);
-    // entityManager.flush();
-    // }
-    // });
-    // } finally {
-    // if (lock.isHeldByCurrentThread()) {
-    // lock.unlock();
-    // }
-    // seatLockManager.removeLockForSeat(seatId);
-    // }
-    // }
-    // }
-
-    /**
-     * Cập nhật trạng thái ghế (LOCKED -> BOOKED hoặc BOOKED -> UNBOOKED)
-     */
-    // @Transactional
-    // public void updateSeatStatus(List<Long> seatIds, String status) {
-    // SeatStatus seatStatus;
-    // try {
-    // seatStatus = SeatStatus.valueOf(status.toUpperCase());
-    // } catch (IllegalArgumentException e) {
-    // throw new RuntimeException("Invalid seat status: " + status);
-    // }
-
-    // for (Long seatId : seatIds) {
-    // ReentrantLock lock = seatLockManager.getLockForSeat(seatId);
-
-    // // Nếu thread hiện tại đang giữ lock, không cần lock lại
-    // boolean needToLock = !lock.isHeldByCurrentThread();
-
-    // if (needToLock) {
-    // lock.lock();
-    // }
-
-    // try {
-    // Seat seat = getSeatById(seatId);
-
-    // // Validate transition
-    // if (seatStatus == SeatStatus.BOOKED && seat.getStatus() != SeatStatus.LOCKED)
-    // {
-    // throw new RuntimeException(
-    // "Cannot book seat " + seatId + " that is not locked");
-    // }
-
-    // seat.setStatus(seatStatus);
-    // seatRepository.save(seat);
-
-    // } finally {
-    // if (needToLock) {
-    // lock.unlock();
-    // }
-    // }
-    // }
-    // }
 
     public boolean areAllSeatsUnbooked(List<Long> seatIds) {
         List<Seat> seats = seatRepository.findAllById(seatIds);
@@ -223,6 +125,20 @@ public class SeatServiceImpl implements SeatService {
             outboxRepository.save(event);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Could not serialize event payload", e);
+        }
+    }
+
+    @Override
+    public void handlePaymentStatus(Long reservationId, List<Long> seatIds, PaymentStatus status) {
+        for (Long seatId : seatIds) {
+            Seat seat = this.seatRepository.findById(seatId).get();
+            if (status == PaymentStatus.SUCCESS) {
+                seat.setStatus(SeatStatus.BOOKED);
+                seat.setReservationId(reservationId);
+            } else {
+                seat.setStatus(SeatStatus.UNBOOKED);
+            }
+            this.seatRepository.save(seat);
         }
     }
 }

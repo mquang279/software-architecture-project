@@ -11,25 +11,29 @@ import com.project.movie_reservation_system.service.SeatService;
 
 @Component
 @KafkaListener(topics = "events.reservation", groupId = "seat-service")
-public class SeatEventListener {
+public class ReservationEventListener {
     private final SeatService seatService;
     private final ObjectMapper mapper;
 
-    public SeatEventListener(SeatService seatService, ObjectMapper mapper) {
+    public ReservationEventListener(SeatService seatService, ObjectMapper mapper) {
         this.seatService = seatService;
         this.mapper = mapper;
     }
 
     @KafkaHandler
-    public void lockSeats(String message) {
+    public void handleReservationEvent(String message) {
         try {
-            JsonNode rootNode = mapper.readTree(message);
+            System.out.println(message);
+            JsonNode root = mapper.readTree(message);
 
-            String payloadString = rootNode.has("payload")
-                    ? rootNode.get("payload").asText()
-                    : message;
+            JsonNode envelope = root.get("payload");
 
-            ReservationCreatedEvent event = mapper.readValue(payloadString, ReservationCreatedEvent.class);
+            String eventType = envelope.get("type").asText();
+            String aggregateId = envelope.get("aggregate_id").asText();
+            String createdAt = envelope.get("created_at").asText();
+
+            JsonNode businessDataNode = envelope.get("payload");
+            ReservationCreatedEvent event = mapper.treeToValue(businessDataNode, ReservationCreatedEvent.class);
 
             System.out.println("Processing lock for reservation: " + event.getReservationId());
 

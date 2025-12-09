@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.project.movie_reservation_system.dto.PaginationResponse;
 import com.project.movie_reservation_system.entity.Seat;
+import com.project.movie_reservation_system.enums.PaymentStatus;
 
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -18,7 +19,5 @@ public interface SeatService {
 
     void processSeatLocking(Long reservationId, Long userId, List<Long> seatIds);
 
-    // void unlockSeats(List<Long> seatIds);
-
-    // void updateSeatStatus(List<Long> seatIds, String status);
+    void handlePaymentStatus(Long reservationId, List<Long> seatIds, PaymentStatus paymentStatus);
 }
