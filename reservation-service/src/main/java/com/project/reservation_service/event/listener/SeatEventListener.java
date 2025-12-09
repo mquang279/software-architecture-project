@@ -6,38 +6,39 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.reservation_service.event.model.SeatLockFailedEvent;
+import com.project.reservation_service.event.model.SeatsLockedEvent;
+import com.project.reservation_service.service.ReservationService;
 
 @Component
-@KafkaListener(topics = "events.payment", groupId = "reservation-service")
+@KafkaListener(topics = "events.seat", groupId = "reservation-service")
 public class SeatEventListener {
     private final ObjectMapper mapper;
+    private final ReservationService reservationService;
 
-    public SeatEventListener(ObjectMapper mapper) {
+    public SeatEventListener(ObjectMapper mapper, ReservationService reservationService) {
         this.mapper = mapper;
+        this.reservationService = reservationService;
     }
 
     @KafkaHandler
-    public void handlePaymentEvent(String message) {
+    public void handleSeatLockEvent(String message) {
         try {
-            JsonNode rootNode = mapper.readTree(message);
+            JsonNode root = mapper.readTree(message);
 
-            System.out.println(message);
+            JsonNode envelope = root.get("payload");
 
-            String payloadString = rootNode.has("payload")
-                    ? rootNode.get("payload").asText()
-                    : message;
+            String eventType = envelope.get("type").asText();
 
-            String aggregatedType = rootNode.get("payload").asText();
+            JsonNode businessDataNode = envelope.get("payload");
 
-            // ReservationCreatedEvent event = mapper.readValue(payloadString,
-            // ReservationCreatedEvent.class);
-
-            // System.out.println("Processing lock for reservation: " +
-            // event.getReservationId());
-
-            // seatService.processSeatLocking(event.getReservationId(), event.getUserId(),
-            // event.getSeatIds());
-
+            if (eventType.equals("SEAT_LOCKED")) {
+                SeatsLockedEvent event = mapper.treeToValue(businessDataNode, SeatsLockedEvent.class);
+                this.reservationService.handleSeatsStatus(event.getReservationId(), eventType);
+            } else {
+                SeatLockFailedEvent event = mapper.treeToValue(businessDataNode, SeatLockFailedEvent.class);
+                this.reservationService.handleSeatsStatus(event.getReservationId(), eventType);
+            }
         } catch (Exception e) {
             System.err.println("Error processing message: " + e.getMessage());
         }

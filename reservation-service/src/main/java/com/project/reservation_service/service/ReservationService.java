@@ -3,17 +3,16 @@ package com.project.reservation_service.service;
 import com.project.reservation_service.dto.PaginationResponse;
 import com.project.reservation_service.dto.ReservationRequestDto;
 import com.project.reservation_service.entity.Reservation;
+import com.project.reservation_service.enums.PaymentStatus;
 
 public interface ReservationService {
     Reservation createReservation(ReservationRequestDto reservation, Long userId);
 
     Reservation getReservationById(long id);
 
-    Reservation cancelReservation(long id);
-
     PaginationResponse<Reservation> getAllReservationsForUser(Long userId, int page, int pageSize);
 
-    Reservation confirmReservation(Long reservationId);
+    void handlePaymentStatus(Long reservationId, PaymentStatus status);
 
-    Reservation cancelReservationByPayment(Long reservationId);
+    void handleSeatsStatus(Long reservationId, String status);
 }

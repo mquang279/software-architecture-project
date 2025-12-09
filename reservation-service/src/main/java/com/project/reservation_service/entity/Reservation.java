@@ -26,10 +26,6 @@ public class Reservation {
     private Long userId;
     private Long showId;
 
-    @ElementCollection
-    @CollectionTable(name = "reservation_seats", joinColumns = @JoinColumn(name = "reservation_id"))
-    @Column(name = "seat_reserved_id")
-    private List<Long> seatsReservedIds;
     private double amountPaid;
 
     @Enumerated(value = EnumType.STRING)

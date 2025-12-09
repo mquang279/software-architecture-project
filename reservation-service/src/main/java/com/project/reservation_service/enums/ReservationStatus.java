@@ -5,4 +5,5 @@ public enum ReservationStatus {
     CANCELED,
     PENDING_PAYMENT,
     CONFIRMED,
+    SEATS_LOCKED
 }
