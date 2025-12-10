@@ -12,8 +12,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name="seats",  indexes={
+        @Index(name = "idx_seat_show_id", columnList = "show_id")
+})
 public class Seat {
-
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
@@ -21,6 +23,7 @@ public class Seat {
     @Enumerated(value = EnumType.STRING)
     private SeatStatus status;
 
+    private Long reservationId;
     private Long showId;
     private double price;
     private int number;

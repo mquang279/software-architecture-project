@@ -17,7 +17,6 @@ public class SeatController {
 
     private final SeatServiceImpl seatService;
 
-    @Autowired
     public SeatController(SeatServiceImpl seatService) {
         this.seatService = seatService;
     }
@@ -32,28 +31,22 @@ public class SeatController {
     public ResponseEntity<PaginationResponse<Seat>> getSeatsByShowId(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam Long showId
-    ) {
+            @RequestParam Long showId) {
         return ResponseEntity.ok(seatService.getSeatsByShowId(showId, size, page));
     }
 
-    @PostMapping("/lock")
-    public void lockSeats(@RequestBody List<Long> seatIds) {
-        seatService.lockSeats(seatIds);
-    }
+    // @PostMapping("/unlock")
+    // public void unlockSeats(@RequestBody List<Long> seatIds) {
+    // seatService.unlockSeats(seatIds);
+    // }
 
-    @PostMapping("/unlock")
-    public void unlockSeats(@RequestBody List<Long> seatIds) {
-        seatService.unlockSeats(seatIds);
-    }
-
-    @PutMapping("/status")
-    public ResponseEntity<Void> updateSeatStatus(
-            @RequestBody List<Long> seatIds,
-            @RequestParam String status) {
-        seatService.updateSeatStatus(seatIds, status);
-        return ResponseEntity.ok().build();
-    }
+    // @PutMapping("/status")
+    // public ResponseEntity<Void> updateSeatStatus(
+    // @RequestBody List<Long> seatIds,
+    // @RequestParam String status) {
+    // seatService.updateSeatStatus(seatIds, status);
+    // return ResponseEntity.ok().build();
+    // }
 
     @PostMapping
     public ResponseEntity<List<Seat>> createSeatsWithGivenPrice(

@@ -1,4 +1,38 @@
 services:
+  zookeeper:
+    image: debezium/zookeeper:2.7.3.Final
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    networks:
+      - app-network
+
+  kafka:
+    image: debezium/kafka:2.7.3.Final
+    ports:
+      - 9092:9092
+    links:
+      - zookeeper
+    environment:
+      - ZOOKEEPER_CONNECT=zookeeper:2181
+    networks:
+      - app-network
+
+  connect:
+    image: debezium/connect:2.7.3.Final
+    ports:
+      - 8084:8083
+      - 5005:5005
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+    networks:
+      - app-network
+
   redis:
     image: redis:latest
     container_name: redis-server
@@ -194,6 +228,7 @@ services:
       - "5440:5432"
     volumes:
       - payment-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
@@ -225,6 +260,7 @@ services:
       - "5436:5432"
     volumes:
       - reservation-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
@@ -256,6 +292,7 @@ services:
       - "5437:5432"
     volumes:
       - seat-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 

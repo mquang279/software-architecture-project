@@ -21,32 +21,4 @@ public class PaymentController {
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
-
-    @PostMapping
-    public ResponseEntity<PaymentResponseDto> processPayment(
-            @RequestBody PaymentRequestDto requestDto,
-            @RequestParam Long userId) {
-
-        PaymentResponseDto response = paymentService.processPayment(requestDto, userId);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable Long paymentId) {
-        PaymentResponseDto response = paymentService.getPaymentById(paymentId);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/reservation/{reservationId}")
-    public ResponseEntity<PaymentResponseDto> getPaymentByReservation(@PathVariable Long reservationId) {
-        PaymentResponseDto response = paymentService.getPaymentByReservationId(reservationId);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("")
-    public ResponseEntity<PaginationResponse<Payment>> getMyPayments(@RequestParam Long userId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        PaginationResponse<Payment> payments = paymentService.getPaymentsByUserId(userId, page, size);
-        return ResponseEntity.ok(payments);
-    }
 }

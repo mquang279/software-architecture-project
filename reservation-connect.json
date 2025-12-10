@@ -1,0 +1,26 @@
+{
+    "name": "reservation-outbox",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "reservation-db",
+        "database.port": "5432",
+        "database.user": "debezium",
+        "database.password": "mypassword",
+        "database.dbname": "postgres",
+        "slot.name": "reservation_slot",
+        "plugin.name": "pgoutput",
+        "topic.prefix": "dbserver1",
+        "schema.include.list": "public",
+        "table.include.list": "public.outbox",
+        "time.precision.mode": "connect",
+        "transforms": "route",
+        "transforms.route.type": "io.debezium.transforms.outbox.EventRouter",
+        "transforms.route.route.by.field": "aggregate_type",
+        "transforms.route.route.topic.replacement": "events.${routedByValue}",
+        "transforms.route.table.field.event.key": "aggregate_id",
+        "transforms.route.table.field.event.payload": "payload",
+        "transforms.route.table.fields.additional.placement": "type:envelope:type,aggregate_id:envelope:aggregate_id,created_at:envelope:created_at",
+        "transforms.route.table.expand.json.payload": "true"
+    }
+}

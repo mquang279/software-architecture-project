@@ -13,6 +13,11 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name="show"
+        , indexes={
+        @Index(name = "idx_show_movie_theater_time", columnList = "movie_id, theater_id, start_time")
+}
+)
 public class Show {
 
     @Id

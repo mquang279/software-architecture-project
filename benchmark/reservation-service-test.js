@@ -127,35 +127,30 @@ export const options = {
     },
 };
 
-// Read workload - GET reservation operations
+// Read workload - Test get reservations by userId with various pagination options
 export function readWorkload() {
-    const operation = Math.floor(Math.random() * 2);
-    let res;
+    // Generate a userId (lower range for higher chance of finding reservations)
+    const userId = Math.floor(Math.random() * 1000) + 1;
+    const page = Math.floor(Math.random() * 10);
+    const size = 10 + Math.floor(Math.random() * 11); // size between 10 and 20
 
-    if (operation === 0) {
-        // Get all reservations for user
-        const userId = Math.floor(Math.random() * 10000) + 1;
-        const page = Math.floor(Math.random() * 10);
-        const size = 10;
-        res = http.get(`${BASE_URL}/api/v1/reservations?userId=${userId}&page=${page}&size=${size}`);
+    const res = http.get(`${BASE_URL}/api/v1/reservations?userId=${userId}&page=${page}&size=${size}`);
 
-        check(res, {
-            "get reservations - status is 200": (r) => r.status === 200,
-            "get reservations - response time < 500ms": (r) => r.timings.duration < 500,
-        });
-    } else {
-        // Get reservation by ID
-        const reservationId = Math.floor(Math.random() * 10000) + 1;
-        res = http.get(`${BASE_URL}/api/v1/reservations/${reservationId}`);
-
-        check(res, {
-            "get reservation by id - status is 200 or 404": (r) => r.status === 200 || r.status === 404,
-            "get reservation by id - response time < 500ms": (r) => r.timings.duration < 500,
-        });
-    }
+    check(res, {
+        "get reservations by userId - status is 200": (r) => r.status === 200,
+        "get reservations by userId - response time < 500ms": (r) => r.timings.duration < 500,
+        "get reservations by userId - has pagination data": (r) => {
+            const body = r.json();
+            return body && typeof body.data !== 'undefined' && typeof body.pageNumber !== 'undefined';
+        },
+        "get reservations by userId - valid page info": (r) => {
+            const body = r.json();
+            return body && body.pageNumber >= 0 && body.pageSize > 0;
+        },
+    });
 
     const result = check(res, {
-        "status is success": (r) => r.status === 200 || r.status === 404,
+        "status is success": (r) => r.status === 200,
         "response time < 500ms": (r) => r.timings.duration < 500,
     });
 

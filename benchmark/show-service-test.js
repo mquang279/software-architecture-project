@@ -17,18 +17,22 @@ function randomReleaseDate() {
 }
 
 function createMovie(params) {
+    const genres = ["ACTION", "COMEDY", "DRAMA", "HORROR", "ROMANCE", "THRILLER", "SCI_FI"];
+    const languages = ["English", "Spanish", "French", "German", "Japanese", "Korean", "Chinese"];
+    const randomNum = Math.floor(Math.random() * 1000000);
+
     const payload = JSON.stringify({
-        movieName: randomString("LoadTestMovie"),
-        genre: ["ACTION"],
-        movieLength: 90 + Math.floor(Math.random() * 61),
-        movieLanguage: "English",
-        releaseDate: randomReleaseDate(),
+        movieName: `Movie ${randomNum}`,
+        genre: [genres[Math.floor(Math.random() * genres.length)]],
+        movieLength: Math.floor(Math.random() * 120) + 60,
+        movieLanguage: languages[Math.floor(Math.random() * languages.length)],
+        releaseDate: new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
     const res = http.post(`${BASE_URL}/api/v1/movies`, payload, params);
 
     const result = check(res, {
-        "create movie - status is 201": (r) => r.status === 201,
+        "create movie - status is 201 or 200": (r) => r.status === 201 || r.status === 200,
         "create movie - response time < 1000ms": (r) => r.timings.duration < 1000,
     });
 
@@ -185,46 +189,58 @@ export const options = {
     },
 };
 
-// Read workload - GET show operations
+// Read workload - Test filterShows API with various filter combinations
 export function readWorkload() {
-    const operation = Math.floor(Math.random() * 3);
+    const operation = Math.floor(Math.random() * 4);
     let res;
+    const page = Math.floor(Math.random() * 10);
+    const size = 10 + Math.floor(Math.random() * 11); // size between 10 and 20
 
     if (operation === 0) {
-        // Get all shows with pagination
-        const page = Math.floor(Math.random() * 10);
-        const size = 10;
-        res = http.get(`${BASE_URL}/api/v1/shows?page=${page}&size=${size}`);
+        // Filter by movieId only - use a realistic range that might exist
+        // Since shows are created with random movieIds, we just test the filtering capability
+        const movieId = 87000 + Math.floor(Math.random() * 1000);
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?movieId=${movieId}&page=${page}&size=${size}`);
 
         check(res, {
-            "get all shows - status is 200": (r) => r.status === 200,
-            "get all shows - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by movie - status is 200": (r) => r.status === 200,
+            "filter by movie - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by movie - has data": (r) => {
+                const body = r.json();
+                return body && typeof body.data !== 'undefined';
+            },
         });
     } else if (operation === 1) {
-        // Get show by ID
-        const showId = Math.floor(Math.random() * 1000) + 1;
-        res = http.get(`${BASE_URL}/api/v1/shows/${showId}`);
+        // Filter by time range using very wide range to capture created shows
+        // Shows are created with future dates, so use a very wide range
+        const from = new Date(Date.now()).toISOString();
+        const to = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString(); // 100 years ahead
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?from=${from}&to=${to}&page=${page}&size=${size}`);
 
         check(res, {
-            "get show by id - status is 200 or 404": (r) => r.status === 200 || r.status === 404,
-            "get show by id - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by time range - status is 200": (r) => r.status === 200,
+            "filter by time range - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by time range - has data": (r) => {
+                const body = r.json();
+                return body && typeof body.data !== 'undefined';
+            },
         });
     } else {
-        // Filter shows by theater and/or movie
-        const theaterId = Math.floor(Math.random() * 100) + 1;
-        const movieId = Math.floor(Math.random() * 1000) + 1;
-        const page = Math.floor(Math.random() * 10);
-        const size = 10;
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?theaterId=${theaterId}&movieId=${movieId}&page=${page}&size=${size}`);
+        // Filter with no parameters (should return all shows with pagination)
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?page=${page}&size=${size}`);
 
         check(res, {
-            "filter shows - status is 200": (r) => r.status === 200,
-            "filter shows - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter no params - status is 200": (r) => r.status === 200,
+            "filter no params - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter no params - has data": (r) => {
+                const body = r.json();
+                return body && typeof body.data !== 'undefined';
+            },
         });
     }
 
     const result = check(res, {
-        "status is success": (r) => r.status === 200 || r.status === 404,
+        "status is success": (r) => r.status === 200,
         "response time < 500ms": (r) => r.timings.duration < 500,
     });
 

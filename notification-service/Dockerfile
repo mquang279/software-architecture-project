@@ -1,12 +1,13 @@
-# Build Stage
-FROM eclipse-temurin:17 AS build
-
-RUN apt-get update \
-    && apt-get install -y maven \
-    && rm -rf /var/lib/apt/lists/*
+# Build
+FROM maven:3.9-eclipse-temurin-17 AS build
 
 WORKDIR /app
+
 COPY pom.xml .
+
+RUN mvn -B -Dmaven.wagon.http.retryHandler.count=3 \
+    dependency:resolve dependency:resolve-plugins
+
 COPY src ./src
 
 RUN mvn -B -DskipTests package
