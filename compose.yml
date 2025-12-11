@@ -51,7 +51,6 @@ services:
       start_period: 10s
     command: ["redis-server", "--appendonly", "yes"]
 
-
   # Discovery Service
   discovery-service:
     build:
@@ -81,6 +80,13 @@ services:
       - "8081:8081"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=auth-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -97,10 +103,16 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
+      - OTEL_SERVICE_NAME=gateway-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     ports:
-      - "8080:8080"
+      - "8079:8080"
     networks:
       - app-network
+      - signoz-net
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -119,6 +131,13 @@ services:
       - "8088:8088"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=user-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -150,6 +169,13 @@ services:
       - "8082:8082"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=movie-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -179,8 +205,15 @@ services:
       - ./env/notification-service.env
     ports:
       - "8090:8090"
+    environment:
+      - OTEL_SERVICE_NAME=notification-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     networks:
       - app-network
+      - signoz-net
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -212,6 +245,13 @@ services:
       - "8091:8091"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=payment-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -244,6 +284,13 @@ services:
       - "8083:8083"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=reservation-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -276,6 +323,13 @@ services:
       - "8089:8089"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=seat-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -308,6 +362,13 @@ services:
       - "8086:8086"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=show-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -339,6 +400,13 @@ services:
       - "8087:8087"
     networks:
       - app-network
+      - signoz-net
+    environment:
+      - OTEL_SERVICE_NAME=theater-service
+      - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -372,3 +440,6 @@ volumes:
 networks:
   app-network:
     driver: bridge
+  signoz-net:
+    external: true
+    name: signoz-net

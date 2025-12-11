@@ -3,7 +3,7 @@ import { check, sleep } from "k6";
 import { Rate } from "k6/metrics";
 
 const errorRate = new Rate("errors");
-const BASE_URL = "http://localhost:8080/api/v1";
+const BASE_URL = "http://localhost:8079/api/v1";
 
 // Test scenarios - realistic progressive load testing
 export const options = {

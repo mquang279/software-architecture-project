@@ -22,7 +22,7 @@ declare -A SERVICES=(
   # ["notification-service"]="8080"
   # ["reservation-service"]="8080"
   # ["seat-service"]="8080"
-  ["show-service"]="8080"
+  ["show-service"]="8079"
   # ["theater-service"]="8080"
 )
 

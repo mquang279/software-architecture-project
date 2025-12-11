@@ -16,4 +16,5 @@ RUN mvn -B -DskipTests package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar /app/app.jar
+COPY opentelemetry-javaagent.jar /opt/opentelemetry-javaagent.jar
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
