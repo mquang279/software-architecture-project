@@ -93,4 +93,4 @@ Decomposed the monolithic application into loosely coupled, domain-specific serv
 ## Credits
 
 *   **Original Project**: [jagmeetsingh1309/movie-reservation-system](https://github.com/jagmeetsingh1309/movie-reservation-system) - The monolithic base this project was migrated from.
-*   **Enhancements**: [mquang279](https://github.com/mquang279) - Microservices migration and advanced patterns implementation.
+
