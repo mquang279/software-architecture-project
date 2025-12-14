@@ -97,16 +97,18 @@ public class ShowServiceImpl implements ShowService {
         redisTemplate.delete("show:id:" + showId);
     }
 
-    public PaginationResponse<Show> filterShows(Long movieId, Instant from, Instant to, Long theaterId, PageRequest pageRequest) {
-//        Object cachedObject = redisTemplate.opsForValue().get("show:theater:" + theaterId + ":movieId:" + movieId);
-//
-//        PaginationResponse<Show> response = objectMapper.convertValue(cachedObject,
-//                new TypeReference<PaginationResponse<Show>>() {
-//                });
-//
-//        if (response != null) {
-//            return response;
-//        }
+    public PaginationResponse<Show> filterShows(Long movieId, Instant from, Instant to, Long theaterId,
+            PageRequest pageRequest) {
+        // Object cachedObject = redisTemplate.opsForValue().get("show:theater:" +
+        // theaterId + ":movieId:" + movieId);
+
+        // PaginationResponse<Show> response = objectMapper.convertValue(cachedObject,
+        // new TypeReference<PaginationResponse<Show>>() {
+        // });
+
+        // if (response != null) {
+        // return response;
+        // }
         Page<Show> showPage;
 
         // Chọn phim -> Chọn ngày -> Chọn rạp -> Chọn suất chiếu
@@ -121,7 +123,8 @@ public class ShowServiceImpl implements ShowService {
             showPage = showRepository.findByMovieIdAndStartTimeBetween(movieId, from, to, pageRequest);
         } else {
             // Đầy đủ: phim + ngày + rạp
-            showPage = showRepository.findByMovieIdAndStartTimeBetweenAndTheaterId(movieId, from, to, theaterId, pageRequest);
+            showPage = showRepository.findByMovieIdAndStartTimeBetweenAndTheaterId(movieId, from, to, theaterId,
+                    pageRequest);
         }
 
         PaginationResponse<Show> response = PaginationResponse.<Show>builder()
@@ -131,7 +134,8 @@ public class ShowServiceImpl implements ShowService {
                 .totalElements(showPage.getTotalElements())
                 .data(showPage.getContent())
                 .build();
-//        redisTemplate.opsForValue().set("show:theater:" + theaterId + ":movieId:" + movieId, response);
+        // redisTemplate.opsForValue().set("show:theater:" + theaterId + ":movieId:" +
+        //         movieId, response);
         return response;
     }
 

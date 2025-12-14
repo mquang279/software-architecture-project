@@ -105,9 +105,14 @@ services:
       - EUREKA_SERVER_URL=http://discovery-service:8761/eureka/
       - OTEL_SERVICE_NAME=gateway-service
       - JAVA_TOOL_OPTIONS=-javaagent:/opt/opentelemetry-javaagent.jar
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4318
-      - OTEL_METRICS_EXPORTER=otlp
-      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://signoz-otel-collector:4317
+      - OTEL_EXPORTER_OTLP_TIMEOUT=300ms
+      - OTEL_TRACES_SAMPLER=parentbased_traceidratio
+      - OTEL_TRACES_SAMPLER_ARG=0.1
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
     ports:
       - "8079:8080"
     networks:
