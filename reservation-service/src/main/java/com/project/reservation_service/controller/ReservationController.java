@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.project.reservation_service.client.SeatServiceClient;
 import com.project.reservation_service.dto.PaginationResponse;
 import com.project.reservation_service.dto.ReservationRequestDto;
 import com.project.reservation_service.entity.Reservation;
@@ -18,25 +17,10 @@ import com.project.reservation_service.service.ReservationService;
 public class ReservationController {
 
     private final ReservationService reservationService;
-    private final SeatServiceClient seatServiceClient;
     private static final Logger log = LoggerFactory.getLogger(ShowServiceClientFallback.class);
 
-    public ReservationController(ReservationService reservationService, SeatServiceClient seatServiceClient) {
+    public ReservationController(ReservationService reservationService) {
         this.reservationService = reservationService;
-        this.seatServiceClient = seatServiceClient;
-    }
-
-    @GetMapping("/test-seat/{seatId}")
-    public String testSeatService(@PathVariable Long seatId) {
-        try {
-            log.info("🔍 Testing connection to seat-service for seat ID: {}", seatId);
-            var seat = seatServiceClient.getSeatById(seatId);
-            log.info("✅ Successfully got seat: {}", seat);
-            return "SUCCESS: " + seat;
-        } catch (Exception e) {
-            log.error("❌ Failed to get seat: {}", e.getMessage(), e);
-            return "FAILED: " + e.getMessage();
-        }
     }
 
     @GetMapping("")
