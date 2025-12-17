@@ -121,20 +121,21 @@ public class ShowServiceImpl implements ShowService {
         }
         Page<Show> showPage;
 
-        // Chọn phim -> Chọn ngày -> Chọn rạp -> Chọn suất chiếu
-        if (movieId == null) {
-            // Không có filter nào
-            showPage = showRepository.findAll(pageRequest);
-        } else if (from == null || to == null) {
-            // Chỉ có phim, chưa chọn ngày
-            showPage = showRepository.findByMovieId(movieId, pageRequest);
-        } else if (theaterId == null) {
-            // Có phim + ngày, chưa chọn rạp
-            showPage = showRepository.findByMovieIdAndStartTimeBetween(movieId, from, to, pageRequest);
-        } else {
-            // Đầy đủ: phim + ngày + rạp
+        if (movieId != null && theaterId != null && from != null && to != null) {
             showPage = showRepository.findByMovieIdAndStartTimeBetweenAndTheaterId(movieId, from, to, theaterId,
                     pageRequest);
+        } else if (movieId != null && from != null && to != null) {
+            showPage = showRepository.findByMovieIdAndStartTimeBetween(movieId, from, to, pageRequest);
+        } else if (movieId != null && theaterId != null) {
+            showPage = showRepository.findByMovieIdAndTheaterId(movieId, theaterId, pageRequest);
+        } else if (movieId != null) {
+            showPage = showRepository.findByMovieId(movieId, pageRequest);
+        } else if (theaterId != null) {
+            showPage = showRepository.findByTheaterId(theaterId, pageRequest);
+        } else if (from != null && to != null) {
+            showPage = showRepository.findByStartTimeBetween(from, to, pageRequest);
+        } else {
+            showPage = showRepository.findAll(pageRequest);
         }
 
         response = PaginationResponse.<Show>builder()
