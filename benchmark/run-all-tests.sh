@@ -97,7 +97,7 @@ run_test() {
   echo ""
   
   # Run k6 test
-  BASE_URL="http://localhost:$port" k6 run \
+  BASE_URL="http://localhost:$port" K6_WEB_DASHBOARD=true k6 run \
     --out json="$result_file" \
     --summary-export="$summary_file" \
     "$script"
