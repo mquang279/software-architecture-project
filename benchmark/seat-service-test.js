@@ -127,31 +127,14 @@ export const options = {
     },
 };
 
-// Read workload - Test get seats by showId with various pagination options
+// Read workload - GET seat by ID
 export function readWorkload() {
-    // Generate a showId (lower range for higher chance of finding seats)
-    const showId = Math.floor(Math.random() * 1000) + 1;
-    const page = Math.floor(Math.random() * 10);
-    const size = 10 + Math.floor(Math.random() * 11); // size between 10 and 20
-
-    const res = http.get(`${BASE_URL}/api/v1/seats?showId=${showId}&page=${page}&size=${size}`);
-
-    check(res, {
-        "get seats by showId - status is 200": (r) => r.status === 200,
-        "get seats by showId - response time < 500ms": (r) => r.timings.duration < 500,
-        "get seats by showId - has pagination data": (r) => {
-            const body = r.json();
-            return body && typeof body.data !== 'undefined' && typeof body.pageNumber !== 'undefined';
-        },
-        "get seats by showId - valid page info": (r) => {
-            const body = r.json();
-            return body && body.pageNumber >= 0 && body.pageSize > 0;
-        },
-    });
+    const seatId = Math.floor(Math.random() * 10000) + 1;
+    const res = http.get(`${BASE_URL}/api/v1/seats/${seatId}`);
 
     const result = check(res, {
-        "status is success": (r) => r.status === 200,
-        "response time < 500ms": (r) => r.timings.duration < 500,
+        "get seat - status is 200 or 404": (r) => r.status === 200 || r.status === 404,
+        "get seat - response time < 500ms": (r) => r.timings.duration < 500,
     });
 
     errorRate.add(!result);

@@ -29,7 +29,11 @@ function createMovie(params) {
         releaseDate: new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    const res = http.post(`${BASE_URL}/api/v1/movies`, payload, params);
+    // Add name tag to group all movie creation requests together
+    const res = http.post(`${BASE_URL}/api/v1/movies`, payload, {
+        ...params,
+        tags: { name: 'CreateMovie' }
+    });
 
     const result = check(res, {
         "create movie - status is 201 or 200": (r) => r.status === 201 || r.status === 200,
@@ -51,7 +55,11 @@ function createTheater(params) {
         location: randomString("Location"),
     });
 
-    const res = http.post(`${BASE_URL}/api/v1/theaters`, payload, params);
+    // Add name tag to group all theater creation requests together
+    const res = http.post(`${BASE_URL}/api/v1/theaters`, payload, {
+        ...params,
+        tags: { name: 'CreateTheater' }
+    });
 
     const result = check(res, {
         "create theater - status is 201": (r) => r.status === 201,
@@ -69,121 +77,115 @@ function createTheater(params) {
 
 export const options = {
     scenarios: {
-        // Write workload tests (run first)
-        write_10k_rps_100_users: {
+        // write_low_load: {
+        //     executor: "constant-arrival-rate",
+        //     rate: 50,  // Realistic baseline (1% of 5k reads)
+        //     timeUnit: "1s",
+        //     duration: "1m",
+        //     preAllocatedVUs: 50,
+        //     maxVUs: 200, // Writes block easily, allow extra VUs
+        //     exec: "writeWorkload",
+        //     startTime: "0s",
+        //     tags: { test_type: "write", rps: "50", users_estimated: "50" },
+        // },
+        // write_medium_load: {
+        //     executor: "constant-arrival-rate",
+        //     rate: 250, // 5% of reads
+        //     timeUnit: "1s",
+        //     duration: "1m",
+        //     preAllocatedVUs: 100,
+        //     maxVUs: 1000,
+        //     exec: "writeWorkload",
+        //     startTime: "1m10s",
+        //     tags: { test_type: "write", rps: "250", users_estimated: "250" },
+        // },
+        // write_peak_load: {
+        //     executor: "constant-arrival-rate",
+        //     rate: 500, // 10% of reads (This is your realistic peak)
+        //     timeUnit: "1s",
+        //     duration: "1m",
+        //     preAllocatedVUs: 200,
+        //     maxVUs: 2000,
+        //     exec: "writeWorkload",
+        //     startTime: "2m20s",
+        //     tags: { test_type: "write", rps: "500", users_estimated: "500" },
+        // },
+        // write_stress_test: {
+        //     executor: "constant-arrival-rate",
+        //     rate: 1000,
+        //     timeUnit: "1s",
+        //     duration: "1m",
+        //     preAllocatedVUs: 500,
+        //     maxVUs: 5000,
+        //     exec: "writeWorkload",
+        //     startTime: "3m30s",
+        //     tags: { test_type: "write", rps: "1000", users_estimated: "1000" },
+        // },
+        read_1k_rps: {
             executor: "constant-arrival-rate",
-            rate: 10000,
+            rate: 1000,
             timeUnit: "1s",
-            duration: "30s",
+            duration: "1m",
             preAllocatedVUs: 100,
-            maxVUs: 200,
-            exec: "writeWorkload",
+            maxVUs: 1000,
+            exec: "readWorkload",
             startTime: "0s",
-            tags: { test_type: "write", rps: "10k", users: "100" },
+            tags: { test_type: "read", rps: "1000" },
         },
-        write_25k_rps_500_users: {
+        read_2k_rps: {
             executor: "constant-arrival-rate",
-            rate: 25000,
+            rate: 2000,
             timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 500,
-            maxVUs: 1000,
-            exec: "writeWorkload",
-            startTime: "40s",
-            tags: { test_type: "write", rps: "25k", users: "500" },
-        },
-        write_50k_rps_1000_users: {
-            executor: "constant-arrival-rate",
-            rate: 50000,
-            timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 1000,
-            maxVUs: 2000,
-            exec: "writeWorkload",
-            startTime: "80s",
-            tags: { test_type: "write", rps: "50k", users: "1000" },
-        },
-        write_75k_rps_2500_users: {
-            executor: "constant-arrival-rate",
-            rate: 75000,
-            timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 2500,
-            maxVUs: 3500,
-            exec: "writeWorkload",
-            startTime: "120s",
-            tags: { test_type: "write", rps: "75k", users: "2500" },
-        },
-        write_100k_rps_5000_users: {
-            executor: "constant-arrival-rate",
-            rate: 100000,
-            timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 5000,
-            maxVUs: 7000,
-            exec: "writeWorkload",
-            startTime: "160s",
-            tags: { test_type: "write", rps: "100k", users: "5000" },
-        },
-        // Read workload tests (run after writes)
-        read_10k_rps_100_users: {
-            executor: "constant-arrival-rate",
-            rate: 10000,
-            timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 100,
-            maxVUs: 200,
-            exec: "readWorkload",
-            startTime: "200s",
-            tags: { test_type: "read", rps: "10k", users: "100" },
-        },
-        read_25k_rps_500_users: {
-            executor: "constant-arrival-rate",
-            rate: 25000,
-            timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 500,
-            maxVUs: 1000,
-            exec: "readWorkload",
-            startTime: "240s",
-            tags: { test_type: "read", rps: "25k", users: "500" },
-        },
-        read_50k_rps_1000_users: {
-            executor: "constant-arrival-rate",
-            rate: 50000,
-            timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 1000,
+            duration: "1m",
+            preAllocatedVUs: 200,
             maxVUs: 2000,
             exec: "readWorkload",
-            startTime: "280s",
-            tags: { test_type: "read", rps: "50k", users: "1000" },
+            startTime: "1m10s",
+            tags: { test_type: "read", rps: "2000" },
         },
-        read_75k_rps_2500_users: {
+        read_4k_rps: {
             executor: "constant-arrival-rate",
-            rate: 75000,
+            rate: 4000,
             timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 2500,
-            maxVUs: 3500,
+            duration: "1m",
+            preAllocatedVUs: 400,
+            maxVUs: 4000,
             exec: "readWorkload",
-            startTime: "320s",
-            tags: { test_type: "read", rps: "75k", users: "2500" },
+            startTime: "2m20s",
+            tags: { test_type: "read", rps: "4000" },
         },
-        read_100k_rps_5000_users: {
+        read_6k_rps: {
             executor: "constant-arrival-rate",
-            rate: 100000,
+            rate: 6000,
             timeUnit: "1s",
-            duration: "30s",
-            preAllocatedVUs: 5000,
-            maxVUs: 7000,
+            duration: "1m",
+            preAllocatedVUs: 600,
+            maxVUs: 6000,
             exec: "readWorkload",
-            startTime: "360s",
-            tags: { test_type: "read", rps: "100k", users: "5000" },
+            startTime: "3m30s",
+            tags: { test_type: "read", rps: "6000" },
         },
+        read_8k_rps: {
+            executor: "constant-arrival-rate",
+            rate: 8000,
+            timeUnit: "1s",
+            duration: "1m",
+            preAllocatedVUs: 800,
+            maxVUs: 8000,
+            exec: "readWorkload",
+            startTime: "4m40s",
+            tags: { test_type: "read", rps: "8000" },
+        },
+        cleanup_delay: {
+            executor: "constant-vus",
+            vus: 1,
+            duration: "10s",
+            startTime: "5m40s",
+            exec: "doNothing",
+        }
     },
     thresholds: {
-        http_req_duration: ["p(95)<500", "p(99)<1000"],
+        http_req_duration: ["p(95)<50", "p(99)<200"],
         http_req_failed: ["rate<0.1"],
         errors: ["rate<0.1"],
     },
@@ -200,14 +202,20 @@ export function readWorkload() {
         // Filter by movieId only - use a realistic range that might exist
         // Since shows are created with random movieIds, we just test the filtering capability
         const movieId = 87000 + Math.floor(Math.random() * 1000);
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?movieId=${movieId}&page=${page}&size=${size}`);
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?movieId=${movieId}&page=${page}&size=${size}`, {
+            tags: { name: 'FilterShowsByMovie' }
+        });
 
         check(res, {
             "filter by movie - status is 200": (r) => r.status === 200,
-            "filter by movie - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by movie - response time < 200ms": (r) => r.timings.duration < 200,
             "filter by movie - has data": (r) => {
-                const body = r.json();
-                return body && typeof body.data !== 'undefined';
+                try {
+                    const body = r.json();
+                    return body && typeof body.data !== 'undefined';
+                } catch (e) {
+                    return false;
+                }
             },
         });
     } else if (operation === 1) {
@@ -215,33 +223,45 @@ export function readWorkload() {
         // Shows are created with future dates, so use a very wide range
         const from = new Date(Date.now()).toISOString();
         const to = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString(); // 100 years ahead
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?from=${from}&to=${to}&page=${page}&size=${size}`);
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?from=${from}&to=${to}&page=${page}&size=${size}`, {
+            tags: { name: 'FilterShowsByTimeRange' }
+        });
 
         check(res, {
             "filter by time range - status is 200": (r) => r.status === 200,
-            "filter by time range - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter by time range - response time < 200ms": (r) => r.timings.duration < 200,
             "filter by time range - has data": (r) => {
-                const body = r.json();
-                return body && typeof body.data !== 'undefined';
+                try {
+                    const body = r.json();
+                    return body && typeof body.data !== 'undefined';
+                } catch (e) {
+                    return false;
+                }
             },
         });
     } else {
         // Filter with no parameters (should return all shows with pagination)
-        res = http.get(`${BASE_URL}/api/v1/shows/filter?page=${page}&size=${size}`);
+        res = http.get(`${BASE_URL}/api/v1/shows/filter?page=${page}&size=${size}`, {
+            tags: { name: 'FilterShowsAll' }
+        });
 
         check(res, {
             "filter no params - status is 200": (r) => r.status === 200,
-            "filter no params - response time < 500ms": (r) => r.timings.duration < 500,
+            "filter no params - response time < 200ms": (r) => r.timings.duration < 200,
             "filter no params - has data": (r) => {
-                const body = r.json();
-                return body && typeof body.data !== 'undefined';
+                try {
+                    const body = r.json();
+                    return body && typeof body.data !== 'undefined';
+                } catch (e) {
+                    return false;
+                }
             },
         });
     }
 
     const result = check(res, {
         "status is success": (r) => r.status === 200,
-        "response time < 500ms": (r) => r.timings.duration < 500,
+        "response time < 200ms": (r) => r.timings.duration < 200,
     });
 
     errorRate.add(!result);
@@ -289,7 +309,10 @@ export function writeWorkload() {
         seats: seats,
     });
 
-    const res = http.post(`${BASE_URL}/api/v1/shows`, payload, params);
+    const res = http.post(`${BASE_URL}/api/v1/shows`, payload, {
+        ...params,
+        tags: { name: 'CreateShow' }
+    });
 
     const result = check(res, {
         "create show - status is 201 or 200 or 400": (r) =>
@@ -299,4 +322,8 @@ export function writeWorkload() {
 
     errorRate.add(!result);
     sleep(0.1);
+}
+
+export function doNothing() {
+    sleep(1);
 }
