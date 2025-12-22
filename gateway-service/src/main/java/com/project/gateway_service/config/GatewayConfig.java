@@ -43,7 +43,7 @@ public class GatewayConfig {
                         .path("/api/v1/movies/**")
                         .filters(f -> f
                                 .requestRateLimiter(c -> c
-                                        .setRateLimiter(highPerformanceRateLimiter())
+                                        .setRateLimiter(redisRateLimiter())
                                         .setKeyResolver(ipKeyResolver()))
                                 .circuitBreaker(c -> c
                                         .setName("MovieCircuitBreaker")
@@ -55,7 +55,7 @@ public class GatewayConfig {
                         .path("/api/v1/theaters/**")
                         .filters(f -> f
                                 .requestRateLimiter(c -> c
-                                        .setRateLimiter(highPerformanceRateLimiter())
+                                        .setRateLimiter(redisRateLimiter())
                                         .setKeyResolver(ipKeyResolver()))
                                 .circuitBreaker(c -> c
                                         .setName("TheaterCircuitBreaker")
@@ -67,7 +67,7 @@ public class GatewayConfig {
                         .path("/api/v1/shows/**")
                         .filters(f -> f
                                 .requestRateLimiter(c -> c
-                                        .setRateLimiter(highPerformanceRateLimiter())
+                                        .setRateLimiter(redisRateLimiter())
                                         .setKeyResolver(ipKeyResolver()))
                                 .circuitBreaker(c -> c
                                         .setName("ShowCircuitBreaker")
@@ -91,7 +91,7 @@ public class GatewayConfig {
                         .path("/api/v1/seats/**")
                         .filters(f -> f
                                 .requestRateLimiter(c -> c
-                                        .setRateLimiter(highPerformanceRateLimiter())
+                                        .setRateLimiter(redisRateLimiter())
                                         .setKeyResolver(ipKeyResolver()))
                                 .circuitBreaker(c -> c
                                         .setName("SeatCircuitBreaker")
@@ -124,11 +124,6 @@ public class GatewayConfig {
                 .build();
     }
 
-
-    @Bean
-    public RedisRateLimiter highPerformanceRateLimiter() {
-        return new RedisRateLimiter(10000, 20000); // 10000 requests per second, burst 20000
-    }
 
     @Bean
     @Primary
