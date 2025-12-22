@@ -63,13 +63,15 @@ public class ShowServiceImpl implements ShowService {
                                 show.getId())));
         redisTemplate.opsForValue().set("show:id:" + show.getId(), show, 60,
                 TimeUnit.SECONDS);
-        redisTemplate.delete("shows:page:*");
-        Set<String> keys = redisTemplate
-                .keys("show:filter:movieId:" + movie.getId() + ":theaterId:" +
-                        theater.getId() + "*");
-        if (keys != null && !keys.isEmpty()) {
-            redisTemplate.delete(keys);
-        }
+        
+        // Optimization: Avoid wildcard deletion and keys scan which are performance killers
+        // redisTemplate.delete("shows:page:*");
+        // Set<String> keys = redisTemplate
+        //        .keys("show:filter:movieId:" + movie.getId() + ":theaterId:" +
+        //                theater.getId() + "*");
+        // if (keys != null && !keys.isEmpty()) {
+        //    redisTemplate.delete(keys);
+        // }
         return show;
     }
 
@@ -145,7 +147,7 @@ public class ShowServiceImpl implements ShowService {
                 .totalElements(showPage.getTotalElements())
                 .data(showPage.getContent())
                 .build();
-        redisTemplate.opsForValue().set(key, response);
+        redisTemplate.opsForValue().set(key, response, 60, TimeUnit.SECONDS);
         return response;
     }
 
