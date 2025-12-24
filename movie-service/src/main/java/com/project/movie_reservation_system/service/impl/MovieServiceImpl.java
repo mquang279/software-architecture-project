@@ -96,7 +96,8 @@ public class MovieServiceImpl implements MovieService {
         Movie saved = movieRepository.save(movie);
 
         redisTemplate.opsForValue().set("movie:id:" + saved.getId(), saved, 60, TimeUnit.SECONDS);
-        redisTemplate.delete(redisTemplate.keys("movies:page:*"));
+        // Optimization: Avoid keys scan
+        // redisTemplate.delete(redisTemplate.keys("movies:page:*"));
         return saved;
     }
 

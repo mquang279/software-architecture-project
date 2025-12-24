@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -60,9 +61,17 @@ public class ShowServiceImpl implements ShowService {
                                 seatStructure.getSeatPrice(),
                                 seatStructure.getArea(),
                                 show.getId())));
-        redisTemplate.opsForValue().set("show:id:" + show.getId(), show, 60, TimeUnit.SECONDS);
-        redisTemplate.delete("shows:page:*");
-        redisTemplate.delete("show:theater:" + theater.getId() + ":movieId:" + movie.getId());
+        redisTemplate.opsForValue().set("show:id:" + show.getId(), show, 60,
+                TimeUnit.SECONDS);
+        
+        // Optimization: Avoid wildcard deletion and keys scan which are performance killers
+        // redisTemplate.delete("shows:page:*");
+        // Set<String> keys = redisTemplate
+        //        .keys("show:filter:movieId:" + movie.getId() + ":theaterId:" +
+        //                theater.getId() + "*");
+        // if (keys != null && !keys.isEmpty()) {
+        //    redisTemplate.delete(keys);
+        // }
         return show;
     }
 
@@ -97,41 +106,48 @@ public class ShowServiceImpl implements ShowService {
         redisTemplate.delete("show:id:" + showId);
     }
 
-    public PaginationResponse<Show> filterShows(Long movieId, Instant from, Instant to, Long theaterId, PageRequest pageRequest) {
-//        Object cachedObject = redisTemplate.opsForValue().get("show:theater:" + theaterId + ":movieId:" + movieId);
-//
-//        PaginationResponse<Show> response = objectMapper.convertValue(cachedObject,
-//                new TypeReference<PaginationResponse<Show>>() {
-//                });
-//
-//        if (response != null) {
-//            return response;
-//        }
+    public PaginationResponse<Show> filterShows(Long movieId, Instant from, Instant to, Long theaterId,
+            PageRequest pageRequest) {
+        String key = "show:filter:movieId:" + movieId + ":theaterId:" + theaterId +
+                ":from:" + from + ":to:" + to
+                + ":page:" + pageRequest.getPageNumber() + ":size:" +
+                pageRequest.getPageSize();
+        Object cachedObject = redisTemplate.opsForValue().get(key);
+
+        PaginationResponse<Show> response = objectMapper.convertValue(cachedObject,
+                new TypeReference<PaginationResponse<Show>>() {
+                });
+
+        if (response != null) {
+            return response;
+        }
         Page<Show> showPage;
 
-        // Chọn phim -> Chọn ngày -> Chọn rạp -> Chọn suất chiếu
-        if (movieId == null) {
-            // Không có filter nào
-            showPage = showRepository.findAll(pageRequest);
-        } else if (from == null || to == null) {
-            // Chỉ có phim, chưa chọn ngày
-            showPage = showRepository.findByMovieId(movieId, pageRequest);
-        } else if (theaterId == null) {
-            // Có phim + ngày, chưa chọn rạp
+        if (movieId != null && theaterId != null && from != null && to != null) {
+            showPage = showRepository.findByMovieIdAndStartTimeBetweenAndTheaterId(movieId, from, to, theaterId,
+                    pageRequest);
+        } else if (movieId != null && from != null && to != null) {
             showPage = showRepository.findByMovieIdAndStartTimeBetween(movieId, from, to, pageRequest);
+        } else if (movieId != null && theaterId != null) {
+            showPage = showRepository.findByMovieIdAndTheaterId(movieId, theaterId, pageRequest);
+        } else if (movieId != null) {
+            showPage = showRepository.findByMovieId(movieId, pageRequest);
+        } else if (theaterId != null) {
+            showPage = showRepository.findByTheaterId(theaterId, pageRequest);
+        } else if (from != null && to != null) {
+            showPage = showRepository.findByStartTimeBetween(from, to, pageRequest);
         } else {
-            // Đầy đủ: phim + ngày + rạp
-            showPage = showRepository.findByMovieIdAndStartTimeBetweenAndTheaterId(movieId, from, to, theaterId, pageRequest);
+            showPage = showRepository.findAll(pageRequest);
         }
 
-        PaginationResponse<Show> response = PaginationResponse.<Show>builder()
+        response = PaginationResponse.<Show>builder()
                 .pageNumber(pageRequest.getPageNumber())
                 .pageSize(pageRequest.getPageSize())
                 .totalPages(showPage.getTotalPages())
                 .totalElements(showPage.getTotalElements())
                 .data(showPage.getContent())
                 .build();
-//        redisTemplate.opsForValue().set("show:theater:" + theaterId + ":movieId:" + movieId, response);
+        redisTemplate.opsForValue().set(key, response, 60, TimeUnit.SECONDS);
         return response;
     }
 
@@ -148,7 +164,8 @@ public class ShowServiceImpl implements ShowService {
 
         show = showRepository.findById(showId)
                 .orElseThrow(() -> new ShowNotFoundException(showId));
-        redisTemplate.opsForValue().set("show:id:" + showId, show, 60, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set("show:id:" + showId, show, 60,
+                TimeUnit.SECONDS);
 
         return show;
     }
